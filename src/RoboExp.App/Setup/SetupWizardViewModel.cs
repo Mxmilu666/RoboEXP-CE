@@ -56,13 +56,8 @@ public sealed partial class SetupWizardViewModel : ObservableObject
 
     private void OnLocalizerChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => RefreshTexts();
 
-    /// <summary>True when either the vendor install or a usable toolchain is missing.</summary>
-    public static bool IsSetupNeeded(AppEnvironment env)
-    {
-        if (env.Install == null) return true;
-        try { return !env.ResolveToolchain().IsAvailable; }
-        catch (DirectoryNotFoundException) { return true; }
-    }
+    /// <summary>Robot resources are needed to open projects; the compiler can be installed on first compilation.</summary>
+    public static bool IsSetupNeeded(AppEnvironment env) => env.Install == null;
 
     public ToolchainPackage? Package { get; }
 
@@ -239,6 +234,9 @@ public sealed partial class SetupWizardViewModel : ObservableObject
                         break;
                     case "verify":
                         SetProgress(() => T("Setup.Verifying"), 0, true);
+                        break;
+                    case "prune":
+                        SetProgress(() => T("Toolchain.Slimming"), 0, true);
                         break;
                     default:
                         SetProgress(() => T("Setup.ExtractingUnknown"), 0, true);

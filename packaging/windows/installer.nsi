@@ -133,5 +133,5 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\${START_MENU_DIR}"
   DeleteRegKey HKCU "${UNINSTALL_REG_KEY}"
   DeleteRegKey HKCU "${APP_REG_KEY}"
-  ; AppData settings/caches/imports and user projects are kept; bundled assets/toolchain are removed above.
+  ; AppData settings/caches/imports/downloaded toolchains and user projects are kept; bundled robot assets are removed above.
 SectionEnd

@@ -24,7 +24,7 @@ public sealed class ProgressDialog : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
 
-        var tipText = new TextBlock { Text = tip, Margin = new Thickness(0, 0, 0, 8) };
+        var tipText = new TextBlock { Text = tip, TextWrapping = Avalonia.Media.TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
         var blink = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
         blink.Tick += (_, _) =>
         {

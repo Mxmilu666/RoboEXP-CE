@@ -5,8 +5,8 @@ using RoboExp.Core.Build;
 
 namespace RoboExp.Core.Install;
 
-/// <summary>Installer progress. <paramref name="Phase"/> is "download", "verify" or "extract";
-/// <paramref name="Total"/> is 0 while the amount of work is unknown (extraction start).</summary>
+/// <summary>Installer progress. <paramref name="Phase"/> is "download", "verify", "extract" or "prune";
+/// <paramref name="Total"/> is 0 while the amount of work is unknown (extraction/pruning start).</summary>
 public sealed record ToolchainInstallProgress(string Phase, long Done, long Total);
 
 /// <summary>
@@ -45,8 +45,10 @@ public sealed class ToolchainInstaller
     /// Installs <paramref name="pkg"/> and returns its bin directory. Already-installed packages return immediately.
     /// The archive goes to <c>&lt;root&gt;/.download/&lt;FileName&gt;</c>; an existing file with the pinned hash is reused,
     /// otherwise it is downloaded (hashed while streaming). It is extracted into a temporary sibling directory and moved
-    /// into place only after <c>bin/arm-none-eabi-gcc</c> is found, so an interrupted install never leaves a half-extracted
-    /// toolchain where the locator would pick it up. The archive is deleted after a successful install.
+    /// into place only after <c>bin/arm-none-eabi-gcc</c> is found and optional language/debugger files are pruned,
+    /// so an interrupted install never leaves a half-extracted toolchain where the locator would pick it up.
+    /// License/copyright notices and every C/libgcc multilib variant are retained. Existing installs are not pruned.
+    /// The archive is deleted after a successful install.
     /// </summary>
     /// <exception cref="InvalidDataException">SHA-256 mismatch (the download is deleted) or the archive lacks arm-none-eabi-gcc.</exception>
     public async Task<string> InstallAsync(ToolchainPackage pkg, string? root, IProgress<ToolchainInstallProgress>? progress, CancellationToken ct)
@@ -70,10 +72,12 @@ public sealed class ToolchainInstaller
             var content = ContentRoot(temp);
             if (!File.Exists(Path.Combine(content, "bin", gcc)))
                 throw new InvalidDataException($"{pkg.FileName} does not contain bin/{gcc}");
+            progress?.Report(new ToolchainInstallProgress("prune", 0, 0));
+            ToolchainPruner.Prune(content, ct);
             ct.ThrowIfCancellationRequested();
             if (Directory.Exists(target)) Directory.Delete(target, recursive: true);
             Directory.Move(content, target);
-            progress?.Report(new ToolchainInstallProgress("extract", 1, 1));
+            progress?.Report(new ToolchainInstallProgress("prune", 1, 1));
         }
         finally
         {

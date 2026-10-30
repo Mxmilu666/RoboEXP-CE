@@ -64,7 +64,7 @@ for arch in $archs; do
 
     echo "==> dotnet publish ($rid, version $version)"
     dotnet publish "$repo/src/RoboExp.App" -c Release -r "$rid" --self-contained \
-        -p:PublishSingleFile=false -p:Version="$version" -o "$publish"
+        -p:PublishSingleFile=false -p:DebugSymbols=false -p:DebugType=None -p:Version="$version" -o "$publish"
     [ -x "$publish/$executable" ] || { echo "publish output lacks $executable" >&2; exit 1; }
 
     echo "==> assembling $app"
@@ -73,7 +73,10 @@ for arch in $archs; do
     cp -R "$publish/." "$app/Contents/MacOS/"
     cp "$repo/packaging/icons/RoboExp.icns" "$app/Contents/Resources/RoboExp.icns"
     cp "$repo/THIRD-PARTY-NOTICES" "$app/Contents/Resources/THIRD-PARTY-NOTICES"
-    dotnet run --project "$repo/packaging/BundleAssets" -c Release -- "$repo" "$app/Contents/Resources" "$rid"
+    cp "$repo/LICENSE" "$app/Contents/Resources/LICENSE"
+    dotnet run --project "$repo/packaging/BundleAssets" -c Release -- "$repo" "$app/Contents/Resources"
+    # Remove native NuGet PDBs too, before signing or creating the DMG.
+    find "$app" -type f -iname '*.pdb' -delete
     sed -e "s|@VERSION@|$version|g" \
         -e "s|@EXECUTABLE@|$executable|g" \
         -e "s|@MIN_MACOS@|$(min_macos "$publish")|g" \

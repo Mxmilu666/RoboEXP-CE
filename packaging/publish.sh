@@ -31,18 +31,20 @@ for rid in "$@"; do
 
     echo "==> $rid: RoboExp.App"
     dotnet publish "$repo/src/RoboExp.App" -c Release -r "$rid" --self-contained \
-        -p:PublishSingleFile=false -p:Version="$version" \
+        -p:PublishSingleFile=false -p:DebugSymbols=false -p:DebugType=None -p:Version="$version" \
         -p:ApplicationIcon="$repo/packaging/icons/RoboExp.ico" -o "$out"
     echo "==> $rid: RoboExp.Cli"
     dotnet publish "$repo/src/RoboExp.Cli" -c Release -r "$rid" --self-contained \
-        -p:PublishSingleFile=false -p:Version="$version" -o "$out"
+        -p:PublishSingleFile=false -p:DebugSymbols=false -p:DebugType=None -p:Version="$version" -o "$out"
     mv "$out/RoboExp.Cli$exe" "$out/roboexp$exe"
     cp "$repo/packaging/icons/RoboExp-256.png" "$out/RoboExp.png"
     cp "$repo/THIRD-PARTY-NOTICES" "$out/THIRD-PARTY-NOTICES"
     cp "$repo/LICENSE" "$out/LICENSE"
 
-    echo "==> bundling robot assets and GCC for $rid"
-    dotnet run --project "$repo/packaging/BundleAssets" -c Release -- "$repo" "$out" "$rid"
+    echo "==> bundling robot assets"
+    dotnet run --project "$repo/packaging/BundleAssets" -c Release -- "$repo" "$out"
+    # Native NuGet packages may carry PDBs even when managed debug symbols are disabled.
+    find "$out" -type f -iname '*.pdb' -delete
 
     echo "==> archiving $name"
     case "$rid" in

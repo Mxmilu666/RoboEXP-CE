@@ -42,7 +42,24 @@ internal static partial class BuildCommands
         try
         {
             var install = VendorInstall.Locate();
-            var builder = new Builder(install, ToolchainLocator.Default);
+            var toolchain = ToolchainLocator.Default;
+            if (!toolchain.IsAvailable)
+            {
+                var package = ToolchainCatalog.ForCurrentHost();
+                if (package == null) return Error("No prebuilt Arm GNU Toolchain for this host; install arm-none-eabi-gcc and set ROBOEXP_ARM_GCC.");
+                Console.Error.WriteLine($"First compilation: downloading Arm GNU Toolchain {package.Version} ({package.Size / 1e6:F0} MB); SHA-256 will be verified.");
+                using var cancellation = new CancellationTokenSource();
+                ConsoleCancelEventHandler cancel = (_, e) => { e.Cancel = true; cancellation.Cancel(); };
+                Console.CancelKeyPress += cancel;
+                try
+                {
+                    var bin = new ToolchainInstaller().InstallAsync(package, null, new InstallProgress(), cancellation.Token).GetAwaiter().GetResult();
+                    ToolchainLocator.Rediscover();
+                    toolchain = new ToolchainLocator(bin);
+                }
+                finally { Console.CancelKeyPress -= cancel; }
+            }
+            var builder = new Builder(install, toolchain);
             if (positional[0] == "examples")
             {
                 var types = type.Equals("all", StringComparison.OrdinalIgnoreCase) ? RobotType.Supported : [RobotType.Parse(type)];
@@ -63,7 +80,7 @@ internal static partial class BuildCommands
             };
             return BuildOne(builder, install, positional[0], RobotType.Parse(type), buildGroup);
         }
-        catch (Exception e) when (e is ArgumentException or IOException)
+        catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or UnauthorizedAccessException or HttpRequestException or OperationCanceledException)
         {
             return Error(e.Message);
         }
@@ -102,6 +119,22 @@ internal static partial class BuildCommands
     private sealed class SyncProgress(Action<string> action) : IProgress<string>
     {
         public void Report(string value) => action(value);
+    }
+
+    private sealed class InstallProgress : IProgress<ToolchainInstallProgress>
+    {
+        private long _last;
+        private string? _phase;
+        public void Report(ToolchainInstallProgress value)
+        {
+            var now = Environment.TickCount64;
+            if (_phase == value.Phase && now - _last < 1000) return;
+            _phase = value.Phase;
+            _last = now;
+            Console.Error.WriteLine(value.Phase == "download"
+                ? $"Downloading compiler: {value.Done / 1e6:F1} / {value.Total / 1e6:F1} MB"
+                : $"Compiler installation: {value.Phase}");
+        }
     }
 
     private enum FailureKind { StaleSource, VendorLibrary, Toolchain }

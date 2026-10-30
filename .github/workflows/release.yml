@@ -46,7 +46,7 @@ jobs:
           REDISTRIBUTION_CONFIRMED: ${{ vars.RELEASE_REDISTRIBUTION_CONFIRMED }}
         run: |
           if [[ "$REDISTRIBUTION_CONFIRMED" != "true" ]]; then
-            echo '::error::Confirm redistribution rights for RoboEXP resources, splash artwork and toolchain components, then set repository variable RELEASE_REDISTRIBUTION_CONFIRMED=true.'
+            echo '::error::Confirm redistribution rights for RoboEXP resources and splash artwork, then set repository variable RELEASE_REDISTRIBUTION_CONFIRMED=true.'
             exit 1
           fi
       - uses: actions/setup-dotnet@v4
@@ -54,9 +54,18 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Prepare robot resources and native compiler for tests
         run: |
-          dotnet run --project packaging/BundleAssets -c Release -- "$GITHUB_WORKSPACE" "$RUNNER_TEMP/test-assets" linux-x64
+          dotnet run --project packaging/BundleAssets -c Release -- "$GITHUB_WORKSPACE" "$RUNNER_TEMP/test-assets"
           echo "ROBOEXP_HOME=$RUNNER_TEMP/test-assets/vendor/app" >> "$GITHUB_ENV"
-          echo "ROBOEXP_ARM_GCC=$RUNNER_TEMP/test-assets/toolchains/arm-gnu-toolchain-15.3.rel2-x86_64-arm-none-eabi/bin" >> "$GITHUB_ENV"
+          dotnet new console --framework net10.0 --output "$RUNNER_TEMP/install-toolchain"
+          dotnet add "$RUNNER_TEMP/install-toolchain" reference "$GITHUB_WORKSPACE/src/RoboExp.Core/RoboExp.Core.csproj"
+          cat > "$RUNNER_TEMP/install-toolchain/Program.cs" <<'CS'
+          using RoboExp.Core.Install;
+          var package = ToolchainCatalog.ForCurrentHost()
+              ?? throw new PlatformNotSupportedException("No native toolchain for this test runner");
+          var bin = await new ToolchainInstaller().InstallAsync(package, args[0], null, CancellationToken.None);
+          await File.AppendAllTextAsync(args[1], $"ROBOEXP_ARM_GCC={bin}{Environment.NewLine}");
+          CS
+          dotnet run --project "$RUNNER_TEMP/install-toolchain" -c Release -- "$RUNNER_TEMP/test-toolchains" "$GITHUB_ENV"
       - name: Test
         run: dotnet test RoboExpCE.slnx -c Release
 
@@ -102,20 +111,45 @@ jobs:
         env:
           TARGET_RID: ${{ matrix.rid }}
         run: bash packaging/macos/build-app.sh --arch "${TARGET_RID#osx-}"
-      - name: Smoke bundled native compiler
-        if: matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
+      - name: Validate lightweight release payload
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
           TARGET_RID: ${{ matrix.rid }}
         run: |
-          if [[ "$TARGET_RID" == osx-* ]]; then
-            bin=dist/RoboExp.app/Contents/Resources/toolchains/arm-gnu-toolchain-15.3.rel2-darwin-arm64-arm-none-eabi/bin
-          else
-            bin="dist/RoboExp-$VERSION-$TARGET_RID/toolchains/arm-gnu-toolchain-15.3.rel2-x86_64-arm-none-eabi/bin"
-          fi
-          printf 'int main(void) { return 0; }\n' > "$RUNNER_TEMP/smoke.c"
-          "$bin/arm-none-eabi-gcc" -mcpu=cortex-m4 -mthumb -c "$RUNNER_TEMP/smoke.c" -o "$RUNNER_TEMP/smoke.o"
-          "$bin/arm-none-eabi-size" "$RUNNER_TEMP/smoke.o"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import zipfile
+
+          rid = os.environ['TARGET_RID']
+          if rid.startswith('osx-'):
+              root = Path('dist/RoboExp.app')
+              resources = root / 'Contents/Resources'
+              binaries = root / 'Contents/MacOS'
+          else:
+              root = Path(f"dist/RoboExp-{os.environ['VERSION']}-{rid}")
+              resources = binaries = root
+          forbidden = [p for p in root.rglob('*')
+                       if p.suffix.lower() == '.pdb' or p.name.lower() == 'toolchains'
+                       or p.name.lower().startswith('arm-none-eabi-')]
+          if forbidden:
+              raise SystemExit(f'Compiler or debug artifacts in release payload: {forbidden}')
+          suffix = '.exe' if rid.startswith('win-') else ''
+          required = [binaries / f'RoboExp.App{suffix}', resources / 'LICENSE',
+                      resources / 'THIRD-PARTY-NOTICES', binaries / 'RoboExp.App.runtimeconfig.json']
+          runtime = 'coreclr.dll' if rid.startswith('win-') else ('libcoreclr.dylib' if rid.startswith('osx-') else 'libcoreclr.so')
+          required.append(binaries / runtime)
+          for path in required:
+              if not path.is_file():
+                  raise SystemExit(f'Missing release payload file: {path}')
+          with zipfile.ZipFile('assets/robot-resources.zip') as archive:
+              files = [entry for entry in archive.infolist() if not entry.is_dir()]
+              for entry in files:
+                  path = resources / 'vendor/app' / entry.filename
+                  if not path.is_file() or path.stat().st_size != entry.file_size:
+                      raise SystemExit(f'Missing or incomplete bundled robot resource: {path}')
+          print(f'Validated {rid} payload: self-contained runtime, licenses, {len(files)} robot resources; no GCC or PDBs')
+          PY
       - name: Stage only distributable files
         env:
           VERSION: ${{ needs.prepare.outputs.version }}

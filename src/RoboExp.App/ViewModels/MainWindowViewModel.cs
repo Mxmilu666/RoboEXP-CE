@@ -456,10 +456,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (input == null) { ShowOutput(loc.T("NoInputFile")); return null; }
         if (Env.Install == null) { ShowOutput(loc.T("Port:InstallMissing")); return null; }
 
-        ToolchainLocator toolchain;
-        try { toolchain = Env.ResolveToolchain(); }
-        catch (DirectoryNotFoundException e) { ShowOutput(loc.T("NoCompiler") + "\n" + e.Message); await Options(); return null; }
-        if (!toolchain.IsAvailable) { ShowOutput(loc.T("NoCompiler") + "\n" + loc.T("Port:ToolchainMissing")); await Options(); return null; }
+        var toolchain = await EnsureToolchainAsync();
+        if (toolchain == null) return null;
 
         var builder = new Builder(Env.Install, toolchain) { Language = Env.Language };
         BuildResult? result = null;
@@ -476,6 +474,61 @@ public sealed partial class MainWindowViewModel : ObservableObject
         else if (text.Length == 0) text = loc.T("Port:BuildFailed");
         ShowOutput(text);
         return new CompileOutcome(input, result);
+    }
+
+    private async Task<ToolchainLocator?> EnsureToolchainAsync()
+    {
+        var loc = Localizer.Instance;
+        try
+        {
+            var existing = Env.ResolveToolchain();
+            if (existing.IsAvailable) return existing;
+        }
+        catch (DirectoryNotFoundException e)
+        {
+            ShowOutput(loc.T("NoCompiler") + "\n" + e.Message);
+            await Options();
+            return null;
+        }
+
+        var package = ToolchainCatalog.ForCurrentHost();
+        if (package == null)
+        {
+            ShowOutput(loc.T("Port:Setup.NoPackage"));
+            await Options();
+            return null;
+        }
+
+        string? bin = null;
+        try
+        {
+            var tip = string.Format(loc.T("Port:Toolchain.FirstCompile"), package.Size / 1e6);
+            await _dialogs.RunWithProgressAsync(loc.T("Port:Setup.ToolchainHeading"), tip, async ct =>
+            {
+                var progress = new Progress<ToolchainInstallProgress>(p =>
+                {
+                    StatusText = p.Phase switch
+                    {
+                        "download" => string.Format(loc.T("Port:Setup.Downloading"), p.Done / 1e6, p.Total / 1e6),
+                        "verify" => loc.T("Port:Setup.Verifying"),
+                        "prune" => loc.T("Port:Toolchain.Slimming"),
+                        _ => loc.T("Port:Setup.ExtractingUnknown"),
+                    };
+                });
+                bin = await new ToolchainInstaller().InstallAsync(package, null, progress, ct);
+            });
+            Env.Settings.ToolchainBin = bin;
+            Env.SaveSettings();
+            ToolchainLocator.Rediscover();
+            StatusText = string.Format(loc.T("Port:Setup.ToolchainOk"), bin);
+            return new ToolchainLocator(bin!);
+        }
+        catch (OperationCanceledException) { ShowOutput(loc.T("Port:Setup.Cancelled")); }
+        catch (Exception e) when (e is IOException or InvalidDataException or UnauthorizedAccessException or HttpRequestException)
+        {
+            ShowOutput(string.Format(loc.T("Port:Setup.DownloadFailed"), e.Message));
+        }
+        return null;
     }
 
     private void ShowOutput(string text)

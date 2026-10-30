@@ -113,7 +113,7 @@ public sealed class ToolchainInstallerTests : IDisposable
         Assert.Equal(Path.Combine(root, pkg.DirectoryName, "bin"), bin);
         Assert.True(File.Exists(Path.Combine(bin, GccName)));
         Assert.Equal(1, handler.Requests);
-        Assert.Equal(["download", "verify", "extract"], phases.Distinct());
+        Assert.Equal(["download", "verify", "extract", "prune"], phases.Distinct());
         Assert.Empty(Directory.GetFileSystemEntries(Path.Combine(root, ".download")));
         Assert.Equal([pkg.DirectoryName, ".download"], Directory.GetFileSystemEntries(root).Select(Path.GetFileName).OrderDescending());
 
@@ -167,17 +167,127 @@ public sealed class ToolchainInstallerTests : IDisposable
         Assert.False(Directory.Exists(Path.Combine(root, pkg.DirectoryName)));
     }
 
+    [Theory]
+    [InlineData(ArchiveKind.Zip)]
+    [InlineData(ArchiveKind.TarXz)]
+    public async Task FreshInstallPrunesOptionalToolsButPreservesCAndLicenses(ArchiveKind kind)
+    {
+        if (kind == ArchiveKind.TarXz && OperatingSystem.IsWindows()) return;
+        string[] removed =
+        [
+            "bin/arm-none-eabi-g++.exe", "bin/arm-none-eabi-gfortran", "bin/arm-none-eabi-gdb",
+            "bin/arm-none-eabi-gcov-tool", "bin/arm-none-eabi-gprof", "bin/arm-none-eabi-lto-dump",
+            "bin/compiler.pdb", "bin/compiler.debug", "bin/compiler.dSYM/Contents/Resources/DWARF/compiler",
+            "libexec/gcc/arm-none-eabi/15.3.1/cc1plus", "libexec/gcc/arm-none-eabi/15.3.1/f951",
+            "arm-none-eabi/include/c++/15.3.1/vector", "lib/gcc/arm-none-eabi/15.3.1/finclude/ieee.mod",
+            "share/man/man1/gcc.1", "share/info/gcc.info", "share/gdb/python/gdb.py",
+        ];
+        string[] retained =
+        [
+            "bin/arm-none-eabi-as", "bin/arm-none-eabi-ld", "bin/arm-none-eabi-objcopy",
+            "bin/arm-none-eabi-objdump", "bin/arm-none-eabi-gcc-ar", "bin/libwinpthread-1.dll",
+            "libexec/gcc/arm-none-eabi/15.3.1/cc1", "libexec/gcc/arm-none-eabi/15.3.1/collect2",
+            "libexec/gcc/arm-none-eabi/15.3.1/lto1", "libexec/gcc/arm-none-eabi/15.3.1/lto-wrapper",
+            "libexec/gcc/arm-none-eabi/15.3.1/liblto_plugin.so", "arm-none-eabi/include/stdio.h",
+            "share/doc/gcc/COPYING3", "share/doc/arm-none-eabi/license.txt",
+            "share/info/COPYING", "arm-none-eabi/include/c++/15.3.1/LICENSE",
+        ];
+        foreach (var multilib in new[] { "", "thumb/v6-m/nofp/", "thumb/v7e-m+fp/hard/", "arm/v5te/softfp/" })
+        {
+            removed = [.. removed, $"arm-none-eabi/lib/{multilib}libstdc++.a",
+                $"arm-none-eabi/lib/{multilib}libstdc++_nano.a", $"arm-none-eabi/lib/{multilib}libsupc++.a",
+                $"arm-none-eabi/lib/{multilib}libgfortran.a"];
+            retained = [.. retained, $"arm-none-eabi/lib/{multilib}libc.a", $"arm-none-eabi/lib/{multilib}libc_nano.a",
+                $"arm-none-eabi/lib/{multilib}libm.a", $"arm-none-eabi/lib/{multilib}librdimon.a",
+                $"arm-none-eabi/lib/{multilib}nano.specs", $"arm-none-eabi/lib/{multilib}crt0.o",
+                $"lib/gcc/arm-none-eabi/15.3.1/{multilib}libgcc.a"];
+        }
+        var (pkg, bytes) = await FakePackageAsync(kind, top =>
+        {
+            foreach (var path in removed.Concat(retained))
+            {
+                var file = Path.Combine(top, path);
+                Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+                File.WriteAllText(file, path);
+            }
+        });
+        var root = Path.Combine(_dir, "toolchains");
+        await new ToolchainInstaller(new HttpClient(new BytesHandler(bytes))).InstallAsync(pkg, root, null, CancellationToken.None);
+        var installed = Path.Combine(root, pkg.DirectoryName);
+        foreach (var path in removed) Assert.False(File.Exists(Path.Combine(installed, path)), path);
+        foreach (var path in retained) Assert.Equal(path, await File.ReadAllTextAsync(Path.Combine(installed, path)));
+
+        // Users may add tools to an existing install; the early-return path must not prune them.
+        var userTool = Path.Combine(installed, removed[0]);
+        await File.WriteAllTextAsync(userTool, "user tool");
+        await new ToolchainInstaller(new HttpClient(new BytesHandler([]))).InstallAsync(pkg, root, null, CancellationToken.None);
+        Assert.Equal("user tool", await File.ReadAllTextAsync(userTool));
+    }
+
+    [UnixFact]
+    public async Task PruningDoesNotTraverseDirectoryLinksOrModifyLinkedContents()
+    {
+        var external = Path.Combine(_dir, "external");
+        Directory.CreateDirectory(external);
+        var externalFile = Path.Combine(external, "keep.pdb");
+        await File.WriteAllTextAsync(externalFile, "outside");
+        var (pkg, bytes) = await FakePackageAsync(ArchiveKind.TarXz, top =>
+        {
+            Directory.CreateDirectory(Path.Combine(top, "share"));
+            Directory.CreateSymbolicLink(Path.Combine(top, "share", "man"), external);
+            Directory.CreateSymbolicLink(Path.Combine(top, "linked"), external);
+            File.CreateSymbolicLink(Path.Combine(top, "bin", "optional.pdb"), externalFile);
+            File.CreateSymbolicLink(Path.Combine(top, "bin", "arm-none-eabi-cc"), GccName);
+        });
+        var root = Path.Combine(_dir, "toolchains");
+        var bin = await new ToolchainInstaller(new HttpClient(new BytesHandler(bytes)))
+            .InstallAsync(pkg, root, null, CancellationToken.None);
+        Assert.Equal("outside", await File.ReadAllTextAsync(externalFile));
+        Assert.False(Directory.Exists(Path.Combine(root, pkg.DirectoryName, "share", "man")));
+        Assert.False(File.Exists(Path.Combine(bin, "optional.pdb")));
+        Assert.Equal(GccName, new FileInfo(Path.Combine(bin, "arm-none-eabi-cc")).LinkTarget);
+        Assert.Equal(external, new DirectoryInfo(Path.Combine(root, pkg.DirectoryName, "linked")).LinkTarget);
+    }
+
+    [Fact]
+    public async Task VerifiedArchiveWithoutCompilerNeverBecomesInstalled()
+    {
+        var (pkg, bytes) = await FakePackageAsync(ArchiveKind.Zip, top => File.Delete(Path.Combine(top, "bin", GccName)));
+        var root = Path.Combine(_dir, "toolchains");
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
+            new ToolchainInstaller(new HttpClient(new BytesHandler(bytes)))
+                .InstallAsync(pkg, root, null, CancellationToken.None));
+        Assert.False(Directory.Exists(Path.Combine(root, pkg.DirectoryName)));
+        Assert.Equal([".download"], Directory.GetDirectories(root).Select(Path.GetFileName));
+        Assert.True(File.Exists(Path.Combine(root, ".download", pkg.FileName)));
+    }
+
+    [Fact]
+    public async Task CancellationBeforeExtractionNeverPublishesOrDeletesVerifiedArchive()
+    {
+        var (pkg, bytes) = await FakePackageAsync(ArchiveKind.Zip);
+        var root = Path.Combine(_dir, "toolchains");
+        using var cts = new CancellationTokenSource();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            new ToolchainInstaller(new HttpClient(new BytesHandler(bytes)))
+                .InstallAsync(pkg, root, new SyncProgress(p => { if (p.Phase == "extract") cts.Cancel(); }), cts.Token));
+        Assert.False(Directory.Exists(Path.Combine(root, pkg.DirectoryName)));
+        Assert.Equal([".download"], Directory.GetDirectories(root).Select(Path.GetFileName));
+        Assert.True(File.Exists(Path.Combine(root, ".download", pkg.FileName)));
+    }
+
     private static string GccName => "arm-none-eabi-gcc" + (OperatingSystem.IsWindows() ? ".exe" : "");
 
     /// <summary>A tiny toolchain archive shaped like the real ones: tar.xz with a top directory (zip without one on Windows).</summary>
-    private async Task<(ToolchainPackage Pkg, byte[] Bytes)> FakePackageAsync()
+    private async Task<(ToolchainPackage Pkg, byte[] Bytes)> FakePackageAsync(ArchiveKind? archiveKind = null, Action<string>? populate = null)
     {
-        var kind = OperatingSystem.IsWindows() ? ArchiveKind.Zip : ArchiveKind.TarXz;
+        var kind = archiveKind ?? (OperatingSystem.IsWindows() ? ArchiveKind.Zip : ArchiveKind.TarXz);
         var pkg = new ToolchainPackage("99.1.rel1", "testhost", "https://example.invalid/fake", "", 0, kind);
         var stage = Path.Combine(_dir, "stage");
         var top = Path.Combine(stage, pkg.DirectoryName);
         Directory.CreateDirectory(Path.Combine(top, "bin"));
         await File.WriteAllTextAsync(Path.Combine(top, "bin", GccName), "fake gcc");
+        populate?.Invoke(top);
         var archive = Path.Combine(_dir, pkg.FileName);
         if (kind == ArchiveKind.Zip) ZipFile.CreateFromDirectory(top, archive);
         else Tar("-cJf", archive, "-C", stage, pkg.DirectoryName);

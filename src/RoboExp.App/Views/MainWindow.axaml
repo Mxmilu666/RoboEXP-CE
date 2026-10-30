@@ -1,0 +1,327 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="using:RoboExp.App.Localization"
+        xmlns:svc="using:RoboExp.App.Icons"
+        xmlns:vm="using:RoboExp.App.ViewModels"
+        xmlns:doc="using:RoboExp.App.Documents"
+        xmlns:inst="using:RoboExp.Core.Install"
+        x:Class="RoboExp.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding WindowTitle}"
+        Icon="avares://RoboExp.App/Assets/RoboExp.ico"
+        Width="1280" Height="820" MinWidth="800" MinHeight="500"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Styles>
+        <Style Selector="Button.tool">
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="MinHeight" Value="30" />
+        </Style>
+        <Style Selector="Button.tool.checked">
+            <Setter Property="Background" Value="{DynamicResource StudioSelectionBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StudioAccentBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+        </Style>
+        <Style Selector="Button.tool Image">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="Button.tool:disabled Image">
+            <Setter Property="Opacity" Value="0.35" />
+        </Style>
+        <Style Selector="Rectangle.sep">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Margin" Value="4,3" />
+            <Setter Property="Fill" Value="{DynamicResource StudioBorderBrush}" />
+        </Style>
+        <Style Selector="MenuItem Image">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="Border.paneHeader">
+            <Setter Property="Background" Value="{DynamicResource StudioRaisedBrush}" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StudioBorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+        <Style Selector="Button.paneClose">
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="{l:Tr File}">
+                <MenuItem x:Name="MenuNew" Header="{l:Tr New}" Command="{Binding NewCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage New}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="MenuOpen" Header="{l:Tr Open}" Command="{Binding OpenCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Open}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr OpenExamplePrograms}" Command="{Binding OpenExampleCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Examples}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem x:Name="MenuSave" Header="{l:Tr Save}" Command="{Binding SaveCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Save}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="MenuSaveAs" Header="{l:Tr SaveAs}" Command="{Binding SaveAsCommand}" />
+                <MenuItem Header="{l:Tr SaveAll}" Command="{Binding SaveAllCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage SaveAll}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{l:Tr Close}" Command="{Binding CloseCommand}" />
+                <MenuItem Header="{l:Tr CloseAllFiles}" Command="{Binding CloseAllCommand}" />
+                <Separator />
+                <MenuItem Header="{l:Tr ExportAsCodeApp}" IsEnabled="False" />
+                <MenuItem Header="{l:Tr ExportAsFlowSub}" IsEnabled="False" />
+                <MenuItem Header="{l:Tr ConvertOldProject}" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="{l:Tr Print}" IsEnabled="False">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Print}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem x:Name="RecentMenu" Header="{l:Tr RecentFiles}">
+                    <MenuItem Header="{l:Tr ClearRecentFilesList}" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{l:Tr Exit}" Click="OnExitClick">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Exit}" /></MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="{l:Tr Edit}">
+                <MenuItem x:Name="MenuUndo" Header="{l:Tr Undo}" Command="{Binding EditCommand}" CommandParameter="Undo">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Undo}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="MenuRedo" Header="{l:Tr Redo}" Command="{Binding EditCommand}" CommandParameter="Redo">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Redo}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem x:Name="MenuCut" Header="{l:Tr Cut}" Command="{Binding EditCommand}" CommandParameter="Cut">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Cut}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="MenuCopy" Header="{l:Tr Copy}" Command="{Binding EditCommand}" CommandParameter="Copy">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Copy}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="MenuPaste" Header="{l:Tr Paste}" Command="{Binding EditCommand}" CommandParameter="Paste">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Paste}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr Delete}" Command="{Binding EditCommand}" CommandParameter="Delete" InputGesture="Delete">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Delete}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem x:Name="MenuSelectAll" Header="{l:Tr SelectAll}" Command="{Binding EditCommand}" CommandParameter="SelectAll" />
+                <Separator />
+                <MenuItem x:Name="MenuFind" Header="{l:Tr Port:Find}" Command="{Binding EditCommand}" CommandParameter="Find" />
+                <MenuItem x:Name="MenuReplace" Header="{l:Tr Port:Replace}" Command="{Binding EditCommand}" CommandParameter="Replace" />
+            </MenuItem>
+            <MenuItem Header="{l:Tr View}">
+                <MenuItem Header="{l:Tr IconsWindow}" Command="{Binding ShowPanelCommand}" CommandParameter="Icons">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage FuncIconDlg}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr CodeWindow}" Command="{Binding ShowPanelCommand}" CommandParameter="Code">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage CodeDlg}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr PropertyWindow}" Command="{Binding ShowPanelCommand}" CommandParameter="Properties">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Properties}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr VariableWindow}" Command="{Binding ShowPanelCommand}" CommandParameter="Variables">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage VarDlg}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr TemplateCodeWindow}" Command="{Binding ShowPanelCommand}" CommandParameter="TemplateCode">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage TemplateCodeDlg}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr OutputWindow}" Command="{Binding ShowPanelCommand}" CommandParameter="Output">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Output}" /></MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="{l:Tr Project}">
+                <MenuItem Header="{l:Tr HardwareInfo}" Command="{Binding ShowPanelCommand}" CommandParameter="Hardware">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage HardwareInfo}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{l:Tr NewSub}" Command="{Binding FeatureCommands[NewSub]}" />
+                <MenuItem Header="{l:Tr RefSub}" Command="{Binding FeatureCommands[RefSub]}" />
+                <MenuItem Header="{l:Tr OpenSub}" Command="{Binding FeatureCommands[OpenSub]}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage OpenSub}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr UpdateSub}" Command="{Binding FeatureCommands[UpdateSub]}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage UpdateSub}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr ManagerSub}" Command="{Binding FeatureCommands[ManagerSub]}" />
+                <Separator />
+                <MenuItem Header="{l:Tr ProjectProperties}" Command="{Binding FeatureCommands[ProjectProperties]}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage ProjectProperty}" /></MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="{l:Tr Tool}">
+                <MenuItem Header="{l:Tr SystemLibrary}" Command="{Binding FeatureCommands[SystemLibrary]}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage SystemLib}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem x:Name="MenuCompile" Header="{l:Tr Compile}" Command="{Binding CompileCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Compile}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="MenuDownload" Header="{l:Tr Download}" Command="{Binding DownloadCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Download}" /></MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{l:Tr Port:Language}">
+                    <MenuItem Header="{l:Tr Options:comboBoxLanguage.Items, Plain=True}" ToggleType="Radio" GroupName="lang"
+                              IsChecked="{Binding IsEnglish, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="Default" />
+                    <MenuItem Header="{l:Tr Options:comboBoxLanguage.Items1, Plain=True}" ToggleType="Radio" GroupName="lang"
+                              IsChecked="{Binding IsChs, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="CHS" />
+                    <MenuItem Header="{l:Tr Options:comboBoxLanguage.Items2, Plain=True}" ToggleType="Radio" GroupName="lang"
+                              IsChecked="{Binding IsCht, Mode=OneWay}" Command="{Binding SetLanguageCommand}" CommandParameter="CHT" />
+                </MenuItem>
+                <MenuItem Header="{l:Tr Options}" Command="{Binding OptionsCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Options}" /></MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="{l:Tr Window}">
+                <MenuItem Header="{l:Tr NextWindow}" Command="{Binding NextWindowCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Next}" /></MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="{l:Tr PreviousWindow}" Command="{Binding PreviousWindowCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage Prev}" /></MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="{l:Tr Help}">
+                <MenuItem Header="{l:Tr About}" Command="{Binding AboutCommand}">
+                    <MenuItem.Icon><Image Source="{svc:FlatImage About}" /></MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+
+        <!-- Toolbar: same order as MainForm.InitToolBarAndMenu -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource StudioRaisedBrush}" BorderBrush="{DynamicResource StudioBorderBrush}" BorderThickness="0,1,0,1" Padding="6,5">
+            <StackPanel Orientation="Horizontal" Height="32">
+                <Button Classes="tool" Command="{Binding NewCommand}" ToolTip.Tip="{l:Tr New, Plain=True}"><Image Source="{svc:FlatImage New}" /></Button>
+                <Button Classes="tool" Command="{Binding OpenCommand}" ToolTip.Tip="{l:Tr Open, Plain=True}"><Image Source="{svc:FlatImage Open}" /></Button>
+                <Button Classes="tool" Command="{Binding SaveCommand}" ToolTip.Tip="{l:Tr Save, Plain=True}"><Image Source="{svc:FlatImage Save}" /></Button>
+                <Rectangle Classes="sep" />
+                <Button Classes="tool" Command="{Binding EditCommand}" CommandParameter="Cut" ToolTip.Tip="{l:Tr Cut, Plain=True}"><Image Source="{svc:FlatImage Cut}" /></Button>
+                <Button Classes="tool" Command="{Binding EditCommand}" CommandParameter="Copy" ToolTip.Tip="{l:Tr Copy, Plain=True}"><Image Source="{svc:FlatImage Copy}" /></Button>
+                <Button Classes="tool" Command="{Binding EditCommand}" CommandParameter="Paste" ToolTip.Tip="{l:Tr Paste, Plain=True}"><Image Source="{svc:FlatImage Paste}" /></Button>
+                <Button Classes="tool" Command="{Binding EditCommand}" CommandParameter="Delete" ToolTip.Tip="{l:Tr Delete, Plain=True}"><Image Source="{svc:FlatImage Delete}" /></Button>
+                <Rectangle Classes="sep" />
+                <Button Classes="tool" Command="{Binding EditCommand}" CommandParameter="Undo" ToolTip.Tip="{l:Tr Undo, Plain=True}"><Image Source="{svc:FlatImage Undo}" /></Button>
+                <Button Classes="tool" Command="{Binding EditCommand}" CommandParameter="Redo" ToolTip.Tip="{l:Tr Redo, Plain=True}"><Image Source="{svc:FlatImage Redo}" /></Button>
+                <Rectangle Classes="sep" />
+                <!-- Flowchart tools (MainForm tool check boxes / align buttons): commands from the flow slice (Flow.*) -->
+                <Button Classes="tool" Classes.checked="{ReflectionBinding ActiveDocument.IsAutoTool, FallbackValue=False}" Command="{Binding FeatureCommands[Flow.AutoTool]}" ToolTip.Tip="{l:Tr AutomaticToolSelection, Plain=True}"><Image Source="{svc:FlatImage AutoTool}" /></Button>
+                <Button Classes="tool" Classes.checked="{ReflectionBinding ActiveDocument.IsScrollTool, FallbackValue=False}" Command="{Binding FeatureCommands[Flow.Scroll]}" ToolTip.Tip="{l:Tr Scroll, Plain=True}"><Image Source="{svc:FlatImage Scroll}" /></Button>
+                <Button Classes="tool" Classes.checked="{ReflectionBinding ActiveDocument.IsSelectTool, FallbackValue=False}" Command="{Binding FeatureCommands[Flow.Select]}" ToolTip.Tip="{l:Tr Select, Plain=True}"><Image Source="{svc:FlatImage Select}" /></Button>
+                <Button Classes="tool" Classes.checked="{ReflectionBinding ActiveDocument.IsConnectTool, FallbackValue=False}" Command="{Binding FeatureCommands[Flow.Connect]}" ToolTip.Tip="{l:Tr Connect, Plain=True}"><Image Source="{svc:FlatImage Connect}" /></Button>
+                <Button Classes="tool" Classes.checked="{ReflectionBinding ActiveDocument.IsTextTool, FallbackValue=False}" Command="{Binding FeatureCommands[Flow.Text]}" ToolTip.Tip="{l:Tr Text, Plain=True}"><Image Source="{svc:FlatImage Text}" /></Button>
+                <Rectangle Classes="sep" />
+                <Button Classes="tool" Command="{Binding FeatureCommands[Flow.AlignLeft]}" ToolTip.Tip="{l:Tr AlignLeft, Plain=True}"><Image Source="{svc:FlatImage AlignLeft}" /></Button>
+                <Button Classes="tool" Command="{Binding FeatureCommands[Flow.AlignRight]}" ToolTip.Tip="{l:Tr AlignRight, Plain=True}"><Image Source="{svc:FlatImage AlignRight}" /></Button>
+                <Button Classes="tool" Command="{Binding FeatureCommands[Flow.AlignTop]}" ToolTip.Tip="{l:Tr AlignTop, Plain=True}"><Image Source="{svc:FlatImage AlignTop}" /></Button>
+                <Button Classes="tool" Command="{Binding FeatureCommands[Flow.AlignBottom]}" ToolTip.Tip="{l:Tr AlignBottom, Plain=True}"><Image Source="{svc:FlatImage AlignBottom}" /></Button>
+                <Button Classes="tool" Command="{Binding FeatureCommands[Flow.AutoAlign]}" ToolTip.Tip="{l:Tr AutoAlign, Plain=True}"><Image Source="{svc:FlatImage AutoAlign}" /></Button>
+                <Rectangle Classes="sep" />
+                <Button Classes="tool" Command="{Binding ShowPanelCommand}" CommandParameter="Variables" ToolTip.Tip="{l:Tr VariableWindow, Plain=True}"><Image Source="{svc:FlatImage VarDlg}" /></Button>
+                <Button Classes="tool" Command="{Binding FeatureCommands[OpenSub]}" ToolTip.Tip="{l:Tr OpenSub, Plain=True}"><Image Source="{svc:FlatImage OpenSub}" /></Button>
+                <Rectangle Classes="sep" />
+                <Button Classes="tool" Command="{Binding CompileCommand}" ToolTip.Tip="{l:Tr Compile, Plain=True}"><Image Source="{svc:FlatImage Compile}" /></Button>
+                <Button Classes="tool" Command="{Binding DownloadCommand}" ToolTip.Tip="{l:Tr Download, Plain=True}"><Image Source="{svc:FlatImage Download}" /></Button>
+                <Rectangle Classes="sep" />
+                <ComboBox ItemsSource="{Binding RobotTypes}" SelectedItem="{Binding SelectedRobotType}" MinWidth="110" Margin="4,0"
+                          VerticalAlignment="Center" ToolTip.Tip="{l:Tr Port:RobotType, Plain=True}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="inst:RobotType">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource StudioPanelBrush}" BorderBrush="{DynamicResource StudioBorderBrush}" BorderThickness="0,1,0,0" Padding="10,4" MinHeight="26">
+            <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource StudioMutedBrush}" FontSize="11" />
+        </Border>
+
+        <Grid x:Name="Layout">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" MinWidth="0" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="200" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="260" MinWidth="0" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="100" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="180" MinHeight="0" />
+            </Grid.RowDefinitions>
+
+            <!-- Left: Icons (palette) -->
+            <DockPanel x:Name="LeftPane" Grid.Column="0" Grid.RowSpan="3">
+                <Border Classes="paneHeader" DockPanel.Dock="Top">
+                    <DockPanel>
+                        <Button Classes="paneClose" DockPanel.Dock="Right" Content="✕" Click="OnHideLeft" />
+                        <TextBlock x:Name="LeftTitle" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    </DockPanel>
+                </Border>
+                <ContentControl x:Name="LeftContent" />
+            </DockPanel>
+            <GridSplitter x:Name="LeftSplitter" Grid.Column="1" Grid.RowSpan="3" Width="3" ResizeDirection="Columns" Background="{DynamicResource StudioBorderBrush}" />
+
+            <!-- Center: documents -->
+            <TabControl Grid.Column="2" Grid.Row="0" Padding="0"
+                        ItemsSource="{Binding Documents}" SelectedItem="{Binding ActiveDocument}">
+                <TabControl.ItemTemplate>
+                    <DataTemplate x:DataType="doc:DocumentViewModel">
+                        <StackPanel Orientation="Horizontal" Spacing="6" ToolTip.Tip="{Binding ToolTip}">
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" FontSize="13" />
+                            <Button Classes="paneClose" Content="✕" Click="OnCloseDocumentClick" />
+                        </StackPanel>
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+            </TabControl>
+            <GridSplitter x:Name="BottomSplitter" Grid.Column="2" Grid.Row="1" Height="3" ResizeDirection="Rows" Background="{DynamicResource StudioBorderBrush}" />
+
+            <!-- Bottom: Output -->
+            <DockPanel x:Name="BottomPane" Grid.Column="2" Grid.Row="2">
+                <Border Classes="paneHeader" DockPanel.Dock="Top">
+                    <DockPanel>
+                        <Button Classes="paneClose" DockPanel.Dock="Right" Content="✕" Click="OnHideBottom" />
+                        <TextBlock x:Name="BottomTitle" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    </DockPanel>
+                </Border>
+                <ContentControl x:Name="BottomContent" />
+            </DockPanel>
+
+            <!-- Right: Properties / Variables / Hardware / Code / Template code -->
+            <GridSplitter x:Name="RightSplitter" Grid.Column="3" Grid.RowSpan="3" Width="3" ResizeDirection="Columns" Background="{DynamicResource StudioBorderBrush}" />
+            <DockPanel x:Name="RightPane" Grid.Column="4" Grid.RowSpan="3">
+                <Border Classes="paneHeader" DockPanel.Dock="Top">
+                    <DockPanel>
+                        <Button Classes="paneClose" DockPanel.Dock="Right" Content="✕" Click="OnHideRight" />
+                        <TextBlock Text="{Binding SelectedRightPanel.Title, FallbackValue=''}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    </DockPanel>
+                </Border>
+                <TabControl ItemsSource="{Binding RightPanels}" SelectedItem="{Binding SelectedRightPanel}" TabStripPlacement="Bottom" Padding="0">
+                    <TabControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ToolPanel">
+                            <TextBlock Text="{Binding Title}" FontSize="12" />
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate x:DataType="vm:ToolPanel">
+                            <ContentControl Content="{Binding Content}" />
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>

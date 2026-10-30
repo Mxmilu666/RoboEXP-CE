@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:p="using:RoboExp.App.Palette"
+             x:Class="RoboExp.App.Palette.PaletteView"
+             x:DataType="p:PaletteViewModel"
+             Background="{DynamicResource StudioPanelBrush}" Foreground="{DynamicResource StudioTextBrush}">
+    <UserControl.Styles>
+        <Style Selector="Button.band">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Background" Value="{DynamicResource StudioRaisedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.band:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource StudioHoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+        </Style>
+        <Style Selector="Button.band:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource StudioSelectionBrush}" />
+        </Style>
+        <Style Selector="Border.icon">
+            <Setter Property="Width" Value="70" />
+            <Setter Property="Height" Value="70" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Border.icon:pointerover">
+            <Setter Property="Background" Value="{DynamicResource StudioRaisedBrush}" />
+        </Style>
+    </UserControl.Styles>
+    <DockPanel>
+        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding BandsAbove}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="p:PaletteBandViewModel">
+                    <Button Classes="band" Content="{Binding Caption}"
+                            Command="{Binding $parent[UserControl].((p:PaletteViewModel)DataContext).SelectBandCommand}"
+                            CommandParameter="{Binding}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding BandsBelow}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="p:PaletteBandViewModel">
+                    <Button Classes="band" Content="{Binding Caption}"
+                            Command="{Binding $parent[UserControl].((p:PaletteViewModel)DataContext).SelectBandCommand}"
+                            CommandParameter="{Binding}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}"
+                   TextWrapping="Wrap" Foreground="{DynamicResource StudioErrorBrush}" Margin="4" FontSize="12" />
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Background="{DynamicResource StudioPanelBrush}">
+            <ItemsControl ItemsSource="{Binding SelectedBand.Items, FallbackValue={x:Null}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="p:PaletteItemViewModel">
+                        <Border Classes="icon" ToolTip.Tip="{Binding ToolTip}" PointerPressed="OnItemPointerPressed">
+                            <StackPanel Margin="2,4,2,0" Spacing="2">
+                                <Image Source="{Binding Icon}" Width="32" Height="32" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Caption}" FontSize="11" TextAlignment="Center" TextWrapping="Wrap"
+                                           MaxLines="2" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

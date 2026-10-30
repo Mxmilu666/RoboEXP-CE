@@ -1,0 +1,175 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag, matching packaging/VERSION (e.g. v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      commit: ${{ steps.version.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - name: Validate tag and release version
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          version=$(python3 packaging/release.py validate "$RELEASE_TAG")
+          {
+            echo "version=$version"
+            echo "tag=$RELEASE_TAG"
+            echo "commit=$(git rev-parse HEAD)"
+          } >> "$GITHUB_OUTPUT"
+      - name: Confirm permission to publish bundled third-party resources
+        env:
+          REDISTRIBUTION_CONFIRMED: ${{ vars.RELEASE_REDISTRIBUTION_CONFIRMED }}
+        run: |
+          if [[ "$REDISTRIBUTION_CONFIRMED" != "true" ]]; then
+            echo '::error::Confirm redistribution rights for RoboEXP resources, splash artwork and toolchain components, then set repository variable RELEASE_REDISTRIBUTION_CONFIRMED=true.'
+            exit 1
+          fi
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Prepare robot resources and native compiler for tests
+        run: |
+          dotnet run --project packaging/BundleAssets -c Release -- "$GITHUB_WORKSPACE" "$RUNNER_TEMP/test-assets" linux-x64
+          echo "ROBOEXP_HOME=$RUNNER_TEMP/test-assets/vendor/app" >> "$GITHUB_ENV"
+          echo "ROBOEXP_ARM_GCC=$RUNNER_TEMP/test-assets/toolchains/arm-gnu-toolchain-15.3.rel2-x86_64-arm-none-eabi/bin" >> "$GITHUB_ENV"
+      - name: Test
+        run: dotnet test RoboExpCE.slnx -c Release
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            runner: ubuntu-24.04
+          - rid: win-arm64
+            runner: ubuntu-24.04
+          - rid: linux-x64
+            runner: ubuntu-24.04
+          - rid: linux-arm64
+            runner: ubuntu-24.04
+          - rid: osx-arm64
+            runner: macos-15
+          - rid: osx-x64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install NSIS
+        if: startsWith(matrix.rid, 'win-')
+        run: sudo apt-get update && sudo apt-get install -y nsis
+      - name: Build Windows installer and portable ZIP
+        if: startsWith(matrix.rid, 'win-')
+        run: bash packaging/windows/build-installer.sh '${{ matrix.rid }}'
+      - name: Build Linux archive
+        if: startsWith(matrix.rid, 'linux-')
+        run: bash packaging/publish.sh '${{ matrix.rid }}'
+      - name: Build macOS application and DMG
+        if: startsWith(matrix.rid, 'osx-')
+        env:
+          TARGET_RID: ${{ matrix.rid }}
+        run: bash packaging/macos/build-app.sh --arch "${TARGET_RID#osx-}"
+      - name: Smoke bundled native compiler
+        if: matrix.rid == 'linux-x64' || matrix.rid == 'osx-arm64'
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TARGET_RID: ${{ matrix.rid }}
+        run: |
+          if [[ "$TARGET_RID" == osx-* ]]; then
+            bin=dist/RoboExp.app/Contents/Resources/toolchains/arm-gnu-toolchain-15.3.rel2-darwin-arm64-arm-none-eabi/bin
+          else
+            bin="dist/RoboExp-$VERSION-$TARGET_RID/toolchains/arm-gnu-toolchain-15.3.rel2-x86_64-arm-none-eabi/bin"
+          fi
+          printf 'int main(void) { return 0; }\n' > "$RUNNER_TEMP/smoke.c"
+          "$bin/arm-none-eabi-gcc" -mcpu=cortex-m4 -mthumb -c "$RUNNER_TEMP/smoke.c" -o "$RUNNER_TEMP/smoke.o"
+          "$bin/arm-none-eabi-size" "$RUNNER_TEMP/smoke.o"
+      - name: Stage only distributable files
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TARGET_RID: ${{ matrix.rid }}
+        run: |
+          mkdir release-assets
+          case "$TARGET_RID" in
+            win-*)
+              cp "dist/RoboExp-$VERSION-$TARGET_RID.zip" release-assets/
+              cp "dist/RoboExp-$VERSION-$TARGET_RID-setup.exe" release-assets/
+              ;;
+            linux-*) cp "dist/RoboExp-$VERSION-$TARGET_RID.tar.gz" release-assets/ ;;
+            osx-*) cp "dist/RoboExp-$VERSION-${TARGET_RID#osx-}.dmg" release-assets/ ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.rid }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify all platform outputs and create checksums
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: python3 packaging/release.py checksums release-assets "$VERSION"
+      - name: Create or resume draft and upload complete asset set
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft >/dev/null 2>&1; then
+            draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq '.isDraft')
+            if [[ "$draft" != true ]]; then
+              echo '::error::Release already published; refusing to replace published binaries. Create a new version tag.'
+              exit 1
+            fi
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "RoboEXP-CE $RELEASE_TAG" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --latest

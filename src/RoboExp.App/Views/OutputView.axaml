@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:RoboExp.App.Localization"
+             xmlns:vm="using:RoboExp.App.ViewModels"
+             x:Class="RoboExp.App.Views.OutputView"
+             x:DataType="vm:OutputViewModel"
+             Background="{DynamicResource StudioPanelBrush}" Foreground="{DynamicResource StudioTextBrush}">
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="4,1" />
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+    </UserControl.Styles>
+    <DockPanel>
+        <!-- Original DockOutputBox columns: Description | Line | File -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="22,3*,56,*" Background="{DynamicResource StudioRaisedBrush}">
+            <TextBlock Grid.Column="1" Text="{l:Tr DockOutputBox:colHeaderMessage.Text, Plain=True}" Margin="4,2" FontSize="12" />
+            <TextBlock Grid.Column="2" Text="{l:Tr DockOutputBox:colHeaderLine.Text, Plain=True}" Margin="4,2" FontSize="12" />
+            <TextBlock Grid.Column="3" Text="{l:Tr DockOutputBox:colHeaderFile.Text, Plain=True}" Margin="4,2" FontSize="12" />
+        </Grid>
+        <ListBox x:Name="Rows" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" DoubleTapped="OnRowDoubleTapped"
+                 Background="{DynamicResource StudioPanelBrush}" Foreground="{DynamicResource StudioTextBrush}" BorderThickness="0">
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{l:Tr DockOutputBox:menuItemCopy.Text}" Click="OnCopy" />
+                    <MenuItem Header="{l:Tr DockOutputBox:menuItemClear.Text}" Command="{Binding ClearCommand}" />
+                </ContextMenu>
+            </ListBox.ContextMenu>
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:OutputRow">
+                    <Grid ColumnDefinitions="22,3*,56,*">
+                        <Image Grid.Column="0" Source="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,0,0" />
+                        <TextBlock Grid.Column="1" Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" Margin="4,0" />
+                        <TextBlock Grid.Column="2" Text="{Binding LineText}" FontSize="12" Margin="4,0" />
+                        <TextBlock Grid.Column="3" Text="{Binding File}" FontSize="12" Margin="4,0" TextTrimming="LeadingCharacterEllipsis"
+                                   ToolTip.Tip="{Binding File}" Foreground="{DynamicResource StudioAccentBrush}" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

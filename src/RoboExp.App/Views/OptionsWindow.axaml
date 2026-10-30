@@ -1,0 +1,63 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="using:RoboExp.App.Localization"
+        xmlns:vm="using:RoboExp.App.ViewModels"
+        xmlns:inst="using:RoboExp.Core.Install"
+        x:Class="RoboExp.App.Views.OptionsWindow"
+        x:DataType="vm:OptionsViewModel"
+        Title="{l:Tr Options:$this.Text, Plain=True}"
+        Width="560" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button Content="{l:Tr Options:btnOK.Text}" Command="{Binding OkCommand}" IsDefault="True" MinWidth="80" />
+            <Button Content="{l:Tr Options:btnCancel.Text}" Command="{Binding CancelCommand}" IsCancel="True" MinWidth="80" />
+        </StackPanel>
+        <TabControl>
+            <TabItem Header="{l:Tr Options:tabSoftwareType.Text, Plain=True}">
+                <StackPanel Spacing="10" Margin="4,8">
+                    <HeaderedContentControl Header="{l:Tr Options:groupBoxSoftwareType.Text, Plain=True}">
+                        <StackPanel Spacing="6" Margin="0,4">
+                            <ComboBox ItemsSource="{Binding RobotTypes}" SelectedItem="{Binding SelectedRobotType}" MinWidth="160">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="inst:RobotType">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Text="{Binding RobotTypeDescription}" TextWrapping="Wrap" Foreground="{DynamicResource StudioMutedBrush}" />
+                        </StackPanel>
+                    </HeaderedContentControl>
+                    <HeaderedContentControl Header="{l:Tr Options:groupBox1.Text, Plain=True}">
+                        <ComboBox ItemsSource="{Binding Languages}" SelectedIndex="{Binding LanguageIndex}" MinWidth="160" Margin="0,4" />
+                    </HeaderedContentControl>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="{l:Tr Options:tabPageGlobal.Text, Plain=True}">
+                <StackPanel Spacing="6" Margin="4,8">
+                    <TextBlock Text="{l:Tr Port:Theme, Plain=True}" />
+                    <ComboBox x:Name="ThemeMode" ItemsSource="{Binding ThemeModes}" SelectedIndex="{Binding ThemeIndex}" MinWidth="200" Margin="0,0,0,8" />
+                    <CheckBox Content="{l:Tr Options:chkCompilerBeforeDownload.Text}" IsChecked="{Binding CompileBeforeDownload}" />
+                    <CheckBox Content="{l:Tr Options:chkShowMsgAfterDownload.Text}" IsChecked="{Binding ShowMessageAfterDownload}" />
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="{l:Tr Port:Paths, Plain=True}">
+                <StackPanel Spacing="4" Margin="4,8">
+                    <TextBlock Text="{l:Tr Port:VendorPath, Plain=True}" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Margin="6,0,0,0" Content="{l:Tr Options:btnSelectCompiler.Text}" Command="{Binding BrowseVendorCommand}" />
+                        <TextBox Text="{Binding VendorPath}" PlaceholderText="{l:Tr Port:AutoDetect, Plain=True}" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding DetectedVendor}" FontSize="11" Foreground="{DynamicResource StudioMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                    <TextBlock Text="{l:Tr Port:ToolchainBin, Plain=True}" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Margin="6,0,0,0" Content="{l:Tr Options:btnSelectWorkingDir.Text}" Command="{Binding BrowseToolchainCommand}" />
+                        <TextBox Text="{Binding ToolchainBin}" PlaceholderText="{l:Tr Port:AutoDetect, Plain=True}" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding DetectedToolchain}" FontSize="11" Foreground="{DynamicResource StudioMutedBrush}" TextWrapping="Wrap" />
+                    <Button Content="{l:Tr Port:Setup.Open}" Command="{Binding OpenSetupWizardCommand}" Margin="0,12,0,0" />
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

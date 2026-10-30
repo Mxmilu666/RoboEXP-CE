@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RoboExp.App/RoboExp.App.csproj" />
+    <Project Path="src/RoboExp.Cli/RoboExp.Cli.csproj" />
+    <Project Path="src/RoboExp.Core/RoboExp.Core.csproj" />
+    <Project Path="src/RoboExp.Device/RoboExp.Device.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RoboExp.Tests/RoboExp.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,99 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="SystemAccentColor">#69AAFF</Color>
+                    <SolidColorBrush x:Key="StudioPanelBrush" Color="#292929" />
+                    <SolidColorBrush x:Key="StudioRaisedBrush" Color="#333333" />
+                    <SolidColorBrush x:Key="StudioBorderBrush" Color="#191919" />
+                    <SolidColorBrush x:Key="StudioTextBrush" Color="#E3E3E3" />
+                    <SolidColorBrush x:Key="StudioMutedBrush" Color="#A3A3A3" />
+                    <SolidColorBrush x:Key="StudioAccentBrush" Color="#69AAFF" />
+                    <SolidColorBrush x:Key="StudioCanvasBrush" Color="#202020" />
+                    <SolidColorBrush x:Key="StudioInputBrush" Color="#242424" />
+                    <SolidColorBrush x:Key="StudioSelectionBrush" Color="#385B85" />
+                    <SolidColorBrush x:Key="StudioHoverBrush" Color="#414141" />
+                    <SolidColorBrush x:Key="StudioErrorBrush" Color="#E7A09B" />
+                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#69AAFF" />
+                    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#E3E3E3" />
+                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#A3A3A3" />
+                    <SolidColorBrush x:Key="SystemControlForegroundBaseLowBrush" Color="#454545" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="SystemAccentColor">#2467B2</Color>
+                    <SolidColorBrush x:Key="StudioPanelBrush" Color="#F2F2F2" />
+                    <SolidColorBrush x:Key="StudioRaisedBrush" Color="#E7E7E7" />
+                    <SolidColorBrush x:Key="StudioBorderBrush" Color="#CBCBCB" />
+                    <SolidColorBrush x:Key="StudioTextBrush" Color="#252525" />
+                    <SolidColorBrush x:Key="StudioMutedBrush" Color="#606060" />
+                    <SolidColorBrush x:Key="StudioAccentBrush" Color="#2467B2" />
+                    <SolidColorBrush x:Key="StudioCanvasBrush" Color="#FAFAFA" />
+                    <SolidColorBrush x:Key="StudioInputBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="StudioSelectionBrush" Color="#D5E5F8" />
+                    <SolidColorBrush x:Key="StudioHoverBrush" Color="#E0E0E0" />
+                    <SolidColorBrush x:Key="StudioErrorBrush" Color="#B4232C" />
+                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#2467B2" />
+                    <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#252525" />
+                    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#606060" />
+                    <SolidColorBrush x:Key="SystemControlForegroundBaseLowBrush" Color="#CBCBCB" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource StudioPanelBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource StudioRaisedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Menu">
+        <Setter Property="Background" Value="{DynamicResource StudioPanelBrush}" />
+        <Setter Property="Padding" Value="6,1" />
+    </Style>
+    <Style Selector="MenuItem">
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button">
+        <Setter Property="CornerRadius" Value="3" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Background" Value="{DynamicResource StudioInputBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource StudioSelectionBrush}" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Background" Value="{DynamicResource StudioInputBrush}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TabControl">
+        <Setter Property="Background" Value="{DynamicResource StudioPanelBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="TabItem">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="Foreground" Value="{DynamicResource StudioMutedBrush}" />
+    </Style>
+    <Style Selector="TabItem:selected">
+        <Setter Property="Background" Value="{DynamicResource StudioRaisedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+    </Style>
+    <Style Selector="ListBox">
+        <Setter Property="Background" Value="{DynamicResource StudioPanelBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="TreeView">
+        <Setter Property="Background" Value="{DynamicResource StudioPanelBrush}" />
+    </Style>
+    <Style Selector="GridSplitter:pointerover">
+        <Setter Property="Background" Value="{DynamicResource StudioAccentBrush}" />
+    </Style>
+</Styles>

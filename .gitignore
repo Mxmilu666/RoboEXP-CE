@@ -1,0 +1,9 @@
+bin/
+obj/
+vendor/
+*.user
+.vs/
+.idea/
+dist/
+RoboEXP_*.exe
+RoboExp.exe

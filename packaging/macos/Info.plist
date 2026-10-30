@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template: build-app.sh substitutes @VERSION@, @EXECUTABLE@, @MIN_MACOS@ and @YEAR@. -->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.github.roboexp-ce.RoboExp</string>
+    <key>CFBundleName</key>
+    <string>RoboExp CE</string>
+    <key>CFBundleDisplayName</key>
+    <string>RoboExp CE</string>
+    <key>CFBundleExecutable</key>
+    <string>@EXECUTABLE@</string>
+    <key>CFBundleIconFile</key>
+    <string>RoboExp.icns</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@VERSION@</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>@Mxmilu 2026</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>@MIN_MACOS@</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>RoboExp CE sends UDP broadcasts on the local network to pair with and download programs to WiFi controllers.</string>
+    <key>NSRemovableVolumesUsageDescription</key>
+    <string>RoboExp CE needs access to removable volumes to copy compiled firmware onto your robot controller's USB disk.</string>
+</dict>
+</plist>

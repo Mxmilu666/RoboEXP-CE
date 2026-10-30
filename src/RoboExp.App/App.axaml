@@ -1,0 +1,17 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:app="using:RoboExp.App"
+             x:Class="RoboExp.App.App"
+             Name="RoboExp"
+             RequestedThemeVariant="Default">
+
+    <Application.DataTemplates>
+        <app:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme DensityStyle="Compact" />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+        <StyleInclude Source="avares://RoboExp.App/Styles/Studio.axaml" />
+    </Application.Styles>
+</Application>

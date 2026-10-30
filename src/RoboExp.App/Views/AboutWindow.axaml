@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="using:RoboExp.App.Localization"
+        xmlns:vm="using:RoboExp.App.ViewModels"
+        x:Class="RoboExp.App.Views.AboutWindow"
+        x:DataType="vm:AboutViewModel"
+        Title="{l:Tr About:$this.Text, Plain=True}"
+        Width="460" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
+    <StackPanel Margin="16" Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+            <Image Source="avares://RoboExp.App/Assets/RoboExp.png" Width="64" Height="64" VerticalAlignment="Top" />
+            <StackPanel Spacing="2">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{l:Tr About:lblProduct.Text, Plain=True}" />
+                    <TextBlock Text="{Binding Product}" FontWeight="SemiBold" />
+                </StackPanel>
+                <TextBlock Text="{Binding CopyRight}" />
+                <SelectableTextBlock Text="{Binding Link}" Foreground="{DynamicResource StudioAccentBrush}" TextWrapping="Wrap" MaxWidth="320" />
+            </StackPanel>
+        </StackPanel>
+        <Border BorderBrush="{DynamicResource StudioBorderBrush}" BorderThickness="1" Background="{DynamicResource StudioCanvasBrush}" Padding="12">
+            <ItemsControl ItemsSource="{Binding Info}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <SelectableTextBlock Text="{Binding}" TextWrapping="Wrap" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+        <Button Content="{l:Tr About:cmdOK.Text}" HorizontalAlignment="Right" MinWidth="80" IsDefault="True" IsCancel="True" Click="OnOk" />
+    </StackPanel>
+</Window>

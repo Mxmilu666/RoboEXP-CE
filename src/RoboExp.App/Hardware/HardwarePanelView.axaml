@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:RoboExp.App.Localization"
+             xmlns:hw="using:RoboExp.App.Hardware"
+             x:Class="RoboExp.App.Hardware.HardwarePanelView"
+             x:DataType="hw:HardwarePanelViewModel">
+    <UserControl.Styles>
+        <Style Selector="TreeViewItem">
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="IsExpanded" Value="True" />
+        </Style>
+        <Style Selector="Border.undefined">
+            <Setter Property="Background" Value="LightGray" />
+        </Style>
+        <Style Selector="WrapPanel.tools > Button">
+            <Setter Property="Margin" Value="0,0,4,4" />
+            <Setter Property="Padding" Value="8,2" />
+        </Style>
+    </UserControl.Styles>
+    <DockPanel Margin="4">
+        <WrapPanel DockPanel.Dock="Top" Classes="tools" IsVisible="{Binding HasContent}">
+            <Button Content="{l:Tr HardInfoDlg:btnAddType.Text}" Command="{Binding AddTypeCommand}" />
+            <Button Content="{l:Tr HardInfoDlg:btnAddInstance.Text}" Command="{Binding AddInstanceCommand}" />
+            <Button Content="{l:Tr HardInfoDlg:btnEdit.Text}" Command="{Binding EditCommand}" />
+            <Button Content="{l:Tr HardInfoDlg:btnDel.Text}" Command="{Binding DeleteCommand}" />
+        </WrapPanel>
+        <Panel>
+            <TextBlock Text="{Binding Placeholder}" IsVisible="{Binding !HasContent}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource StudioMutedBrush}" Margin="8" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
+            <Grid RowDefinitions="2*,4,*" IsVisible="{Binding HasContent}">
+                <HeaderedContentControl Header="{l:Tr HardInfoDlg:grpHardTable.Text, Plain=True}">
+                    <TreeView x:Name="Tree" ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedNode}" DoubleTapped="OnTreeDoubleTapped">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="hw:HardwareNode" ItemsSource="{Binding Children}">
+                                <TextBlock Text="{Binding Caption}" FontSize="12" />
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </HeaderedContentControl>
+                <GridSplitter Grid.Row="1" ResizeDirection="Rows" Background="Transparent" />
+                <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="8">
+                        <HeaderedContentControl Header="{l:Tr HardInfoDlg:grpUsingInfo.Text, Plain=True}" IsVisible="{Binding HasUsage}">
+                            <TreeView x:Name="UsedTree" ItemsSource="{Binding UsedBySubroutines}" MaxHeight="160"
+                                      SelectionChanged="OnUsedSelectionChanged" DoubleTapped="OnUsedDoubleTapped">
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate x:DataType="hw:UsedHardwareNode" ItemsSource="{Binding Children}">
+                                        <Border Classes.undefined="{Binding IsUndefined}" Padding="2,0">
+                                            <TextBlock Text="{Binding Caption}" FontSize="12" />
+                                        </Border>
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+                        </HeaderedContentControl>
+                        <HeaderedContentControl Header="{l:Tr HardInfoDlg:grpInfoDesc.Text, Plain=True}">
+                            <StackPanel Spacing="4">
+                                <CheckBox Content="{l:Tr HardInfoDlg:chkDefault.Text, Plain=True}" IsChecked="{Binding IsDefaultOrder}"
+                                          IsHitTestVisible="False" Focusable="False" />
+                                <ItemsControl ItemsSource="{Binding PinDescriptions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{Binding TypeDescription}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource StudioMutedBrush}" />
+                            </StackPanel>
+                        </HeaderedContentControl>
+                        <HeaderedContentControl Header="{l:Tr HardInfoDlg:grpPicHardInfo.Text, Plain=True}">
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                <hw:RcuPictureControl x:Name="Picture" />
+                            </Viewbox>
+                        </HeaderedContentControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Panel>
+    </DockPanel>
+</UserControl>

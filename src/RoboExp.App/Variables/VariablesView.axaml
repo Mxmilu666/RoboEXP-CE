@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:RoboExp.App.Localization"
+             xmlns:v="using:RoboExp.App.Variables"
+             x:Class="RoboExp.App.Variables.VariablesView"
+             x:DataType="v:VariablesViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.hdr">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="4,3" />
+        </Style>
+    </UserControl.Styles>
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="v:VariableRowViewModel">
+            <Grid ColumnDefinitions="64,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,2">
+                <TextBlock Text="{l:Tr Xwb:VariableFrm_Name, Plain=True}" VerticalAlignment="Center" ToolTip.Tip="{l:Tr Xwb:VariableFrm_InfoName, Plain=True}" />
+                <TextBox Name="TxtName" Grid.Column="1" Text="{Binding Name}" LostFocus="OnNameCommit" KeyDown="OnNameKey" />
+                <TextBlock Grid.Row="1" Text="{l:Tr Xwb:VariableFrm_Type, Plain=True}" VerticalAlignment="Center" ToolTip.Tip="{l:Tr Xwb:VariableFrm_InfoType, Plain=True}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Types}" SelectedItem="{Binding Type}" />
+                <TextBlock Grid.Row="2" Text="{l:Tr Xwb:VariableFrm_Default, Plain=True}" VerticalAlignment="Center" ToolTip.Tip="{l:Tr Xwb:VariableFrm_InfoDefault, Plain=True}" />
+                <TextBox Name="TxtDefault" Grid.Row="2" Grid.Column="1" Text="{Binding DefaultValue}" LostFocus="OnDefaultCommit" KeyDown="OnDefaultKey" />
+                <TextBlock Grid.Row="3" Text="{l:Tr Xwb:VariableFrm_Hint, Plain=True}" VerticalAlignment="Center" ToolTip.Tip="{l:Tr Xwb:VariableFrm_InfoHint, Plain=True}" />
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Hint}" LostFocus="OnHintCommit" />
+            </Grid>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+    <Grid RowDefinitions="Auto,*,Auto,*" Margin="4">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2">
+                <Button Name="btnAddLocalVar" Content="{l:Tr Xwb:VariableFrm_Add, Plain=True}" Command="{Binding AddLocalCommand}" ToolTip.Tip="{l:Tr Xwb:VariableFrm_AddLocalVar, Plain=True}" />
+                <Button Name="btnDelLocalVar" Content="{l:Tr Xwb:VariableFrm_Delete, Plain=True}" Command="{Binding DeleteLocalCommand}" ToolTip.Tip="{l:Tr Xwb:VariableFrm_DelVar, Plain=True}" />
+            </StackPanel>
+            <TextBlock Classes="hdr" Text="{l:Tr Xwb:VariableFrm_LocalVar, Plain=True}" />
+        </DockPanel>
+        <ListBox Name="ptgLocal" Grid.Row="1" Margin="0,2" ItemsSource="{Binding Locals}" SelectedItem="{Binding SelectedLocal}" />
+        <DockPanel Grid.Row="2" Margin="0,6,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2">
+                <Button Name="btnAddGlobalVar" Content="{l:Tr Xwb:VariableFrm_Add, Plain=True}" Command="{Binding AddGlobalCommand}" ToolTip.Tip="{Binding AddGlobalTip}" />
+                <Button Name="btnDelGlobalVar" Content="{l:Tr Xwb:VariableFrm_Delete, Plain=True}" Command="{Binding DeleteGlobalCommand}" ToolTip.Tip="{l:Tr Xwb:VariableFrm_DelVar, Plain=True}" />
+            </StackPanel>
+            <TextBlock Classes="hdr" Text="{l:Tr Xwb:VariableFrm_GlobalVar, Plain=True}" />
+        </DockPanel>
+        <ListBox Name="ptgGlobal" Grid.Row="3" Margin="0,2" ItemsSource="{Binding Globals}" SelectedItem="{Binding SelectedGlobal}" />
+    </Grid>
+</UserControl>

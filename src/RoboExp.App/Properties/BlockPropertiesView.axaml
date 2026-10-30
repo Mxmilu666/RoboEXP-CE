@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:RoboExp.App.Localization"
+             xmlns:p="using:RoboExp.App.Properties"
+             x:Class="RoboExp.App.Properties.BlockPropertiesView"
+             x:DataType="p:BlockPropertiesViewModel"
+             Background="{DynamicResource StudioPanelBrush}" Foreground="{DynamicResource StudioTextBrush}">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.cat">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,8,0,2" />
+            <Setter Property="Foreground" Value="{DynamicResource StudioMutedBrush}" />
+        </Style>
+        <Style Selector="Button.sign">
+            <Setter Property="MinWidth" Value="26" />
+            <Setter Property="Padding" Value="3,1" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource StudioCanvasBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StudioBorderBrush}" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource StudioRaisedBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource StudioTextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StudioBorderBrush}" />
+        </Style>
+    </UserControl.Styles>
+    <Grid RowDefinitions="*,Auto">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="6" Spacing="2">
+
+            <!-- Function call (RefreshPropertyBag categories 1..5) -->
+            <StackPanel IsVisible="{Binding IsFunction}" Spacing="2">
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_ParameterTitle, Plain=True}" />
+                <TextBlock IsVisible="{Binding !HasCallee}" Text="{l:Tr NotReference, Plain=True}" Foreground="{DynamicResource StudioMutedBrush}" />
+                <ItemsControl ItemsSource="{Binding Parameters}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="p:ParameterRowViewModel">
+                            <Grid ColumnDefinitions="110,*" Margin="0,1" Background="Transparent"
+                                  PointerPressed="OnParameterHelpPointerPressed" GotFocus="OnParameterHelpGotFocus">
+                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <ComboBox Grid.Column="1" IsVisible="{Binding IsFixed}" HorizontalAlignment="Stretch"
+                                          ItemsSource="{Binding Candidates}" SelectedItem="{Binding Value}" />
+                                <!-- ComboBoxEnable: free text plus a drop-down list (opened by its button, not while typing) -->
+                                <ComboBox Grid.Column="1" IsVisible="{Binding !IsFixed}" IsEditable="True" HorizontalAlignment="Stretch"
+                                          ItemsSource="{Binding Candidates}" Text="{Binding Value, Mode=TwoWay}"
+                                          LostFocus="OnParameterLostFocus" KeyDown="OnParameterKeyDown" DropDownClosed="OnParameterDropDownClosed" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel IsVisible="{Binding HasReturn}" Spacing="2">
+                    <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_ReturnTitle, Plain=True}" />
+                    <Grid ColumnDefinitions="110,*">
+                        <TextBlock Text="{l:Tr Xwb:PropertyFrm_ReturnType, Plain=True}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding ReturnTypeText}" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="110,*">
+                        <TextBlock Text="{l:Tr Xwb:PropertyFrm_ReturnVariable, Plain=True}" VerticalAlignment="Center" />
+                        <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding VariableCandidates}"
+                                  SelectedItem="{Binding ReturnVariable}" />
+                    </Grid>
+                </StackPanel>
+
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_GeneralTitle, Plain=True}" />
+                <Grid ColumnDefinitions="110,*" ToolTip.Tip="{l:Tr Xwb:PropertyFrm_InfoSubName, Plain=True}">
+                    <TextBlock Text="{l:Tr Xwb:PropertyFrm_SubName, Plain=True}" />
+                    <SelectableTextBlock Grid.Column="1" Text="{Binding SubName}" />
+                </Grid>
+                <Grid ColumnDefinitions="110,*" ToolTip.Tip="{l:Tr Xwb:PropertyFrm_InfoSubDesc, Plain=True}">
+                    <TextBlock Text="{l:Tr Xwb:PropertyFrm_SubDescription, Plain=True}" />
+                    <SelectableTextBlock Grid.Column="1" Text="{Binding SubDescription}" TextWrapping="Wrap" />
+                </Grid>
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_DisplayTitle, Plain=True}" />
+                <Grid ColumnDefinitions="110,*" ToolTip.Tip="{l:Tr Xwb:PropertyFrm_InfoCode, Plain=True}">
+                    <TextBlock Text="{l:Tr Xwb:PropertyFrm_Code, Plain=True}" />
+                    <SelectableTextBlock Grid.Column="1" Text="{Binding Code}" FontFamily="Menlo,Consolas,monospace" TextWrapping="Wrap" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Expression (PnlExpression) -->
+            <StackPanel IsVisible="{Binding IsExpression}" Spacing="4">
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:ExpressionFrm_GpbExpression, Plain=True}" />
+                <TextBox x:Name="TxtExpression" Text="{Binding Expression}" FontFamily="Menlo,Consolas,monospace"
+                         LostFocus="OnExpressionLostFocus" KeyDown="OnExpressionKeyDown"
+                         ToolTip.Tip="{l:Tr Xwb:ExpressionFrm_InfoCodeExpression, Plain=True}" />
+                <ItemsControl x:Name="SignBar" ItemsSource="{Binding Signs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="p:SignButton">
+                            <Button Classes="sign" Content="{Binding Caption}" ToolTip.Tip="{Binding Tip}" Focusable="False"
+                                    Click="OnSignClick" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid ColumnDefinitions="*,Auto">
+                    <ComboBox x:Name="CmbVariable" HorizontalAlignment="Stretch" ItemsSource="{Binding VariableCandidates}"
+                              PlaceholderText="{l:Tr Xwb:ExpressionFrm_SelectVariable, Plain=True}"
+                              ToolTip.Tip="{l:Tr Xwb:ExpressionFrm_Variables, Plain=True}" SelectionChanged="OnVariablePicked" />
+                    <Button Grid.Column="1" Margin="4,0,0,0" Content="{l:Tr Xwb:ExpressionFrm_CheckExpression, Plain=True}"
+                            ToolTip.Tip="{l:Tr Xwb:ExpressionFrm_BtnCheck, Plain=True}" Command="{Binding CheckExpressionCommand}" />
+                </Grid>
+            </StackPanel>
+
+            <!-- For (m_ForPropertyBag) -->
+            <StackPanel IsVisible="{Binding IsFor}" Spacing="2">
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_LoopTimes, Plain=True}" />
+                <Grid ColumnDefinitions="110,*">
+                    <TextBlock Text="{l:Tr Xwb:PropertyFrm_Times, Plain=True}" VerticalAlignment="Center" />
+                    <ComboBox x:Name="LoopBox" Grid.Column="1" IsEditable="True" HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding VariableCandidates}" Text="{Binding LoopCount, Mode=OneWay}"
+                              LostFocus="OnLoopLostFocus" KeyDown="OnLoopKeyDown" DropDownClosed="OnLoopDropDownClosed" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Code editor block (SetCodeEditor) -->
+            <StackPanel IsVisible="{Binding IsCodeEditor}" Spacing="2">
+                <TextBlock Classes="cat" Text="{l:Tr Port:Prop.Includes, Plain=True}" />
+                <TextBox Text="{Binding GlobalCode}" AcceptsReturn="True" MinHeight="60" FontFamily="Menlo,Consolas,monospace"
+                         LostFocus="OnCodesLostFocus" />
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_Code, Plain=True}" />
+                <TextBox Text="{Binding Codes}" AcceptsReturn="True" AcceptsTab="True" MinHeight="140" FontFamily="Menlo,Consolas,monospace"
+                         LostFocus="OnCodesLostFocus" />
+            </StackPanel>
+
+            <!-- Text annotation -->
+            <StackPanel IsVisible="{Binding IsText}" Spacing="2">
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_Hint, Plain=True}" />
+                <TextBox Text="{Binding Text}" AcceptsReturn="True" MinHeight="60" LostFocus="OnTextLostFocus" />
+            </StackPanel>
+
+            <!-- Hint (Description string[]) -->
+            <StackPanel IsVisible="{Binding HasHint}" Spacing="2">
+                <TextBlock Classes="cat" Text="{l:Tr Xwb:PropertyFrm_Hint, Plain=True}" />
+                <TextBox Text="{Binding Hint}" AcceptsReturn="True" MinHeight="48" TextWrapping="Wrap"
+                         ToolTip.Tip="{l:Tr Xwb:PropertyFrm_InfoHint, Plain=True}" LostFocus="OnHintLostFocus" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+    <p:PropertyHelpView Grid.Row="1" />
+    </Grid>
+</UserControl>

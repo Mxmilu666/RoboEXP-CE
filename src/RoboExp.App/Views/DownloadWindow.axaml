@@ -1,0 +1,87 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="using:RoboExp.App.Localization"
+        xmlns:vm="using:RoboExp.App.ViewModels"
+        x:Class="RoboExp.App.Views.DownloadWindow"
+        x:DataType="vm:DownloadViewModel"
+        Title="{l:Tr Port:Download.Title, Plain=True}"
+        Width="480" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" FontSize="12">
+    <Window.Styles>
+        <Style Selector="Button">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="12,4" />
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="6,3" />
+        </Style>
+        <Style Selector="TextBlock.step">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.step.active">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
+        </Style>
+    </Window.Styles>
+    <DockPanel Margin="16,12">
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" Margin="0,12,0,0">
+            <Button x:Name="OpenProgramFolder" Content="{l:Tr Port:Download.OpenFolder, Plain=True}" HorizontalAlignment="Left" Click="OnOpenFolder" />
+            <Button x:Name="CancelDownload" Grid.Column="1" Content="{l:Tr DownloadX1RCU:cmdExit.Text}"
+                    Command="{Binding CancelCommand}" IsCancel="True" IsDefault="True" MinWidth="86" />
+        </Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="540">
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding BinPath}" />
+                    <TextBlock Grid.Column="1" Text="{Binding ControllerName}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="12,0,0,0" />
+                </Grid>
+                <HeaderedContentControl Header="{l:Tr DownloadX1RCU:groupBox1.Text, Plain=True}">
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="1" Padding="12,10">
+                        <Grid ColumnDefinitions="32,*" RowDefinitions="42,42,42" ColumnSpacing="12">
+                            <Image Source="{Binding UsbImage}" Width="32" Height="28" Stretch="Uniform" />
+                            <TextBlock Grid.Column="1" Classes="step" Classes.active="{Binding IsStep1Active}" Text="{Binding Step1FullText}" />
+                            <Image Grid.Row="1" Source="{Binding PowerImage}" Width="32" Height="28" Stretch="Uniform" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Classes="step" Classes.active="{Binding IsStep2Active}" Text="{Binding Step2FullText}" />
+                            <Image Grid.Row="2" Source="{Binding ButtonImage}" Width="32" Height="28" Stretch="Uniform" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Classes="step" Classes.active="{Binding IsStep3Active}" Text="{Binding Step3Text}" />
+                        </Grid>
+                    </Border>
+                </HeaderedContentControl>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock x:Name="DownloadStatus" Text="{Binding Status}" TextWrapping="Wrap" MinHeight="18" />
+                    <TextBlock Grid.Column="1" Text="{Binding ProgressText}" VerticalAlignment="Center" />
+                </Grid>
+                <ProgressBar x:Name="DownloadProgress" Value="{Binding Percent}" Minimum="0" Maximum="100" Height="12" />
+                <Grid ColumnDefinitions="Auto,78,*" ColumnSpacing="8" IsVisible="{Binding HasWifi}" IsEnabled="{Binding !IsDownloading}">
+                    <TextBlock Text="{l:Tr DownloadX1RCU:label4.Text, Plain=True}" VerticalAlignment="Center" />
+                    <TextBox x:Name="PairCodeBox" Grid.Column="1" Text="{Binding PairCode}" MaxLength="6" />
+                    <CheckBox x:Name="FixedIpCheck" Grid.Column="2" Content="{l:Tr Port:Download.FixedAddress, Plain=True}" IsChecked="{Binding UseFixedIp}" MinHeight="28" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto,54" ColumnSpacing="6" IsVisible="{Binding UseFixedIp}" IsEnabled="{Binding !IsDownloading}">
+                    <TextBox Text="{Binding IpSegment}" PlaceholderText="192.168.0" />
+                    <TextBlock Grid.Column="1" Text="." VerticalAlignment="Center" />
+                    <TextBox Grid.Column="2" Text="{Binding IpHost}" MaxLength="3" />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <TextBlock Text="{Binding FileSizeText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1" Text="{Binding FileTimeText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                </Grid>
+                <Expander x:Name="ConnectionOptions" Header="{l:Tr Port:Download.Advanced, Plain=True}" IsExpanded="{Binding IsAdvancedOpen}"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="0" BorderThickness="0">
+                    <StackPanel Spacing="6" Margin="0,6,0,0">
+                        <TextBlock Text="{l:Tr Port:Targets, Plain=True}" />
+                        <ListBox x:Name="DownloadTargets" ItemsSource="{Binding Targets}" SelectedItem="{Binding SelectedTarget}" Height="90" IsEnabled="{Binding !IsDownloading}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DownloadTargetItem"><TextBlock Text="{Binding Label}" TextWrapping="Wrap" /></DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button x:Name="StartDownload" Content="{l:Tr DownloadBluetooth:cmdDownload.Text}" Command="{Binding StartCommand}" HorizontalAlignment="Right" MinWidth="86" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

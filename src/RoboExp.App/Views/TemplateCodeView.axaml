@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="using:RoboExp.App.Localization"
+             xmlns:vm="using:RoboExp.App.ViewModels"
+             x:Class="RoboExp.App.Views.TemplateCodeView"
+             x:DataType="vm:TemplateCodeViewModel">
+    <DockPanel Margin="2">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,2">
+            <Button DockPanel.Dock="Right" Content="{l:Tr Port:Insert}" Margin="4,0,0,0" Click="OnInsert" />
+            <ComboBox ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" HorizontalAlignment="Stretch">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:CodeTemplateGroup">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </DockPanel>
+        <ListBox ItemsSource="{Binding SelectedGroup.Items, FallbackValue={x:Null}}" SelectedItem="{Binding SelectedItem}" DoubleTapped="OnDoubleTapped">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:CodeTemplate">
+                    <TextBlock Text="{Binding Caption}" ToolTip.Tip="{Binding ToolTip}" FontSize="12" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

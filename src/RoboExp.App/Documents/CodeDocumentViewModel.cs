@@ -20,7 +20,10 @@ public sealed class CodeDocumentViewModel : DocumentViewModel
         Document.UndoStack.MarkAsOriginalFile();
         Encoding = encoding;
         FilePath = filePath;
-        Document.TextChanged += (_, _) => IsDirty = !Document.UndoStack.IsOriginalFile;
+        Document.UndoStack.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Document.UndoStack.IsOriginalFile)) IsDirty = !Document.UndoStack.IsOriginalFile;
+        };
     }
 
     public override DocumentKind Kind => KindInfo;
@@ -80,12 +83,18 @@ public sealed class CodeDocumentViewModel : DocumentViewModel
 
     public override async Task SaveAsync(string path)
     {
+        var version = Document.Version;
         var text = Document.Text;
         var encoding = Encoding;
         await Task.Run(() => TextFileCodec.Write(path, text, encoding));
         FilePath = Path.GetFullPath(path);
-        Document.UndoStack.MarkAsOriginalFile();
-        IsDirty = false;
+        // The editor stays usable while writing; newer edits must not be marked as saved.
+        if (version.CompareAge(Document.Version) == 0)
+        {
+            Document.UndoStack.MarkAsOriginalFile();
+            IsDirty = false;
+        }
+        else Document.UndoStack.DiscardOriginalFileMarker();
     }
 
     public override async Task<BuildInput?> PrepareBuildAsync()

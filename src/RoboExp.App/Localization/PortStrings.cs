@@ -34,6 +34,7 @@ public static class PortStrings
         ["Yes"] = ("&Yes", "是(&Y)", "是(&Y)"),
         ["No"] = ("&No", "否(&N)", "否(&N)"),
         ["SaveFailed"] = ("Save failed: ", "保存失败: ", "保存失敗: "),
+        ["AutoSaveFailed"] = ("Auto-save failed: ", "自动保存失败: ", "自動儲存失敗: "),
         ["NotGbk"] = ("The text contains characters that cannot be saved in GBK (the controller's encoding).", "文本包含无法以 GBK（控制器编码）保存的字符。", "文字包含無法以 GBK（控制器編碼）保存的字元。"),
         ["CodeFiles"] = ("C Files", "C 文件", "C 檔案"),
         ["AllFiles"] = ("All Files", "所有文件", "所有檔案"),

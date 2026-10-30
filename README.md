@@ -18,6 +18,7 @@
 - **继续使用原版工程**：读取和保存 `.rcu` 文件，保留模块图标与布局；支持原版模块复制格式。
 - **查看与编辑代码**：流程图生成 C 代码，提供语法高亮和编译错误定位。
 - **管理工程**：配置变量、子程序和硬件端口，查看参数说明与示例。
+- **自动保存**：切换文档标签或切出主窗口时，自动保存已命名文件的修改；未命名文件需先手动保存。保存失败会保留未保存标记，并在状态栏和输出区提示。
 - **下载到机器人**：支持 USB HID、控制器磁盘、蓝牙串口和 Wi-Fi，具体方式取决于控制器型号。
 - **按习惯调整界面**：浅色、深色或自动跟随系统；支持简体中文、繁体中文和英文。
 
@@ -58,6 +59,6 @@ MRCU · M2RCU · M6RCU · E2RCU · E3RCU · E6RCU · E7RCU · C1RCU · C6RCU · 
 
 @Mxmilu 2026 · [github.com/Mxmilu666/RoboEXP-CE](https://github.com/Mxmilu666/RoboEXP-CE)
 
-自编写部分采用 [MIT License](https://opensource.org/license/mit)。原版 RoboEXP 资源及第三方内容遵循各自授权，不属于 CE 代码许可范围；本项目与原版厂商无隶属或官方支持关系。
+自编写部分采用 [MIT License](LICENSE)。原版 RoboEXP 资源及第三方内容遵循各自授权，不属于 CE 代码许可范围；本项目与原版厂商无隶属或官方支持关系。
 
 图标使用 Lucide / Feather 衍生资源。开屏插画：[Pixiv PID: 132125952](https://www.pixiv.net/artworks/132125952)，未确认转载授权。详情见 [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES)。

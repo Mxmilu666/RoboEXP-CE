@@ -18,6 +18,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 {
     private readonly IDialogService _dialogs;
     private bool _syncingRobotType;
+    private readonly SemaphoreSlim _saveGate = new(1, 1);
 
     public MainWindowViewModel(AppEnvironment env, IDialogService dialogs)
     {
@@ -99,6 +100,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(WindowTitle));
         RefreshCommandStates();
         ActiveDocumentChanged?.Invoke(this, newValue);
+        if (oldValue != null) _ = AutoSaveDocumentAsync(oldValue);
     }
 
     private void OnActiveDocumentPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -272,8 +274,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
             if (!await SaveDocumentAsync(doc, saveAs: false)) return;
     }
 
+    /// <summary>Saves modified, named documents without opening file pickers or modal dialogs.</summary>
+    public async Task AutoSaveDocumentsAsync()
+    {
+        foreach (var doc in Documents.ToList()) await AutoSaveDocumentAsync(doc);
+    }
+
+    private Task<bool> AutoSaveDocumentAsync(DocumentViewModel doc) => SaveDocumentCoreAsync(doc, false, autoSave: true);
+
     /// <summary>Saves (prompting for a path when untitled or Save As). Returns false if cancelled or failed.</summary>
-    public async Task<bool> SaveDocumentAsync(DocumentViewModel doc, bool saveAs)
+    public Task<bool> SaveDocumentAsync(DocumentViewModel doc, bool saveAs) => SaveDocumentCoreAsync(doc, saveAs, autoSave: false);
+
+    private async Task<bool> SaveDocumentCoreAsync(DocumentViewModel doc, bool saveAs, bool autoSave)
+    {
+        await _saveGate.WaitAsync();
+        try
+        {
+            if (autoSave && (!Documents.Contains(doc) || !doc.IsDirty || doc.FilePath == null)) return true;
+            return await SaveDocumentLockedAsync(doc, saveAs, autoSave);
+        }
+        finally { _saveGate.Release(); }
+    }
+
+    private async Task<bool> SaveDocumentLockedAsync(DocumentViewModel doc, bool saveAs, bool autoSave)
     {
         var loc = Localizer.Instance;
         var path = doc.FilePath;
@@ -290,17 +313,27 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
         catch (EncoderFallbackException)
         {
-            await _dialogs.ShowMessageAsync(loc.T("Port:SaveFailed") + loc.T("Port:NotGbk"), loc.T("RoboExp"), MessageKind.Error);
+            await ReportSaveFailureAsync(doc, loc.T("Port:NotGbk"), autoSave);
             return false;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            await _dialogs.ShowMessageAsync(loc.T("Port:SaveFailed") + e.Message, loc.T("RoboExp"), MessageKind.Error);
+            await ReportSaveFailureAsync(doc, e.Message, autoSave);
             return false;
         }
-        AddRecent(path);
+        if (!autoSave) AddRecent(path);
         OnPropertyChanged(nameof(WindowTitle));
         return true;
+    }
+
+    private Task ReportSaveFailureAsync(DocumentViewModel doc, string message, bool autoSave)
+    {
+        var loc = Localizer.Instance;
+        if (!autoSave) return _dialogs.ShowMessageAsync(loc.T("Port:SaveFailed") + message, loc.T("RoboExp"), MessageKind.Error);
+        StatusText = loc.T("Port:AutoSaveFailed") + doc.ToolTip + ": " + message;
+        Output.Rows.Add(new OutputRow(StatusText, null, null, doc.FilePath!, OutputSeverity.Error));
+        Panel(PanelIds.Output).IsVisible = true;
+        return Task.CompletedTask;
     }
 
     [RelayCommand(CanExecute = nameof(HasActiveDocument))]

@@ -35,7 +35,10 @@ public sealed class CodeProjectDocumentViewModel : DocumentViewModel
         foreach (var doc in Documents)
         {
             doc.UndoStack.MarkAsOriginalFile();
-            doc.TextChanged += (_, _) => IsDirty = Documents.Any(d => !d.UndoStack.IsOriginalFile);
+            doc.UndoStack.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(doc.UndoStack.IsOriginalFile)) IsDirty = Documents.Any(d => !d.UndoStack.IsOriginalFile);
+            };
         }
     }
 

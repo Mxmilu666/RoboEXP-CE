@@ -21,6 +21,16 @@ public partial class MainWindow : Window, IDialogService
     {
         InitializeComponent();
         RecentMenu.SubmenuOpened += (_, _) => FillRecentMenu();
+        Deactivated += OnWindowDeactivated;
+    }
+
+    private void OnWindowDeactivated(object? sender, EventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+        {
+            if (IsVisible && !IsActive && !_closeConfirmed && !OwnedWindows.Any(w => w.IsVisible) && _vm != null)
+                await _vm.AutoSaveDocumentsAsync();
+        }, Avalonia.Threading.DispatcherPriority.Background);
     }
 
     private MainWindowViewModel Vm => _vm ?? throw new InvalidOperationException("DataContext not set");

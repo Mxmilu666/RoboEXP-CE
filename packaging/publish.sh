@@ -39,6 +39,7 @@ for rid in "$@"; do
     mv "$out/RoboExp.Cli$exe" "$out/roboexp$exe"
     cp "$repo/packaging/icons/RoboExp-256.png" "$out/RoboExp.png"
     cp "$repo/THIRD-PARTY-NOTICES" "$out/THIRD-PARTY-NOTICES"
+    cp "$repo/LICENSE" "$out/LICENSE"
 
     echo "==> bundling robot assets and GCC for $rid"
     dotnet run --project "$repo/packaging/BundleAssets" -c Release -- "$repo" "$out" "$rid"

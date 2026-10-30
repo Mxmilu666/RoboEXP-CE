@@ -37,6 +37,16 @@
                 <StackPanel Spacing="6" Margin="4,8">
                     <TextBlock Text="{l:Tr Port:Theme, Plain=True}" />
                     <ComboBox x:Name="ThemeMode" ItemsSource="{Binding ThemeModes}" SelectedIndex="{Binding ThemeIndex}" MinWidth="200" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:Tr Port:FlowBackground, Plain=True}" />
+                    <ComboBox x:Name="FlowBackgroundMode" ItemsSource="{Binding FlowBackgroundModes}" SelectedIndex="{Binding FlowBackgroundIndex}" MinWidth="240" />
+                    <StackPanel IsVisible="{Binding IsCustomFlowBackground}" Spacing="6" Margin="0,4,0,8">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Right" Width="42" Margin="8,0,0,0" Background="{Binding FlowBackgroundPreview}" BorderBrush="{DynamicResource StudioBorderBrush}" BorderThickness="1" />
+                            <TextBox x:Name="FlowBackgroundColor" Text="{Binding FlowBackgroundColor}" PlaceholderText="#8080C0" MaxLength="7" />
+                        </DockPanel>
+                        <TextBlock Text="{l:Tr Port:FlowBackground.Hint, Plain=True}" Foreground="{DynamicResource StudioMutedBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding FlowBackgroundError}" Foreground="{DynamicResource StudioErrorBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
                     <CheckBox Content="{l:Tr Options:chkCompilerBeforeDownload.Text}" IsChecked="{Binding CompileBeforeDownload}" />
                     <CheckBox Content="{l:Tr Options:chkShowMsgAfterDownload.Text}" IsChecked="{Binding ShowMessageAfterDownload}" />
                 </StackPanel>

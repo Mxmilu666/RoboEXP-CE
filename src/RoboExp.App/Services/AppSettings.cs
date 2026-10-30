@@ -7,6 +7,7 @@ using RoboExp.Core.Library;
 namespace RoboExp.App.Services;
 
 public enum AppTheme { System, Light, Dark }
+public enum FlowBackgroundMode { Default, Classic, Custom }
 
 /// <summary>
 /// User settings persisted as JSON under the user config dir (<c>$ROBOEXP_CONFIG_DIR</c> overrides).
@@ -22,6 +23,8 @@ public sealed class AppSettings
     public string? ToolchainBin { get; set; }
     public UiLanguage? Language { get; set; }
     public AppTheme Theme { get; set; } = AppTheme.System;
+    public FlowBackgroundMode FlowBackground { get; set; } = FlowBackgroundMode.Default;
+    public string FlowBackgroundColor { get; set; } = "#8080C0";
     public string? RobotType { get; set; }
     public bool CompileBeforeDownload { get; set; } = true;
     public bool ShowMessageAfterDownload { get; set; } = true;

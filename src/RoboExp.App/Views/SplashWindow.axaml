@@ -3,32 +3,32 @@
         x:Class="RoboExp.App.Views.SplashWindow"
         Title="RoboExp CE" Width="740" Height="520"
         CanResize="False" WindowDecorations="None" ShowInTaskbar="True"
-        WindowStartupLocation="CenterScreen" Background="#202020"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource StudioCanvasBrush}"
         Icon="avares://RoboExp.App/Assets/RoboExp.ico">
-    <Border BorderBrush="#4A4A4A" BorderThickness="1" PointerPressed="OnDragWindow">
+    <Border BorderBrush="{DynamicResource StudioBorderBrush}" BorderThickness="1" PointerPressed="OnDragWindow">
         <Grid ColumnDefinitions="388,*">
-            <Border Background="#202020" Padding="32,30,28,26">
+            <Border Background="{DynamicResource StudioCanvasBrush}" Padding="32,30,28,26">
                 <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
                     <Image Source="avares://RoboExp.App/Assets/RoboExp.png" Width="72" Height="72" HorizontalAlignment="Left" />
                     <StackPanel Grid.Row="1" Spacing="5" Margin="0,22,0,0">
-                        <TextBlock Text="RoboExp CE" FontSize="34" FontWeight="SemiBold" Foreground="#F5F5F5" LetterSpacing="-0.8" />
-                        <TextBlock Text="ROBOTICS · FLOWCHART · CODE" Foreground="#A8A8A8" FontSize="10" LetterSpacing="1.2" />
+                        <TextBlock Text="RoboExp CE" FontSize="34" FontWeight="SemiBold" Foreground="{DynamicResource StudioTextBrush}" LetterSpacing="-0.8" />
+                        <TextBlock Text="ROBOTICS · FLOWCHART · CODE" Foreground="{DynamicResource StudioMutedBrush}" FontSize="10" LetterSpacing="1.2" />
                     </StackPanel>
-                    <TextBlock x:Name="VersionLabel" Grid.Row="2" Margin="0,16,0,0" Foreground="#C6C6C6" FontSize="12" />
+                    <TextBlock x:Name="VersionLabel" Grid.Row="2" Margin="0,16,0,0" Foreground="{DynamicResource StudioMutedBrush}" FontSize="12" />
                     <StackPanel Grid.Row="4" Spacing="10" Margin="0,0,0,24">
-                        <Border Width="28" Height="3" Background="#FF713F" HorizontalAlignment="Left" />
-                        <TextBlock x:Name="StatusLabel" Foreground="#D0D0D0" FontSize="12" TextWrapping="Wrap" MinHeight="32" />
+                        <Border Width="28" Height="3" Background="{DynamicResource StudioAccentBrush}" HorizontalAlignment="Left" />
+                        <TextBlock x:Name="StatusLabel" Foreground="{DynamicResource StudioTextBrush}" FontSize="12" TextWrapping="Wrap" MinHeight="32" />
                     </StackPanel>
                     <StackPanel Grid.Row="5" Spacing="6">
-                        <TextBlock Text="@Mxmilu 2026" Foreground="#B6B6B6" FontSize="12" />
-                        <TextBlock Text="github.com/Mxmilu666/RoboEXP-CE" Foreground="#969696" FontSize="10" />
+                        <TextBlock Text="@Mxmilu 2026" Foreground="{DynamicResource StudioMutedBrush}" FontSize="12" />
+                        <TextBlock Text="github.com/Mxmilu666/RoboEXP-CE" Foreground="{DynamicResource StudioMutedBrush}" FontSize="10" />
                     </StackPanel>
                 </Grid>
             </Border>
-            <Grid Grid.Column="1" ClipToBounds="True" Background="#D5E6E2">
+            <Grid Grid.Column="1" ClipToBounds="True" Background="{DynamicResource StudioRaisedBrush}">
                 <Image Source="avares://RoboExp.App/Assets/Splash-132125952.jpg" Stretch="UniformToFill" />
-                <Border VerticalAlignment="Bottom" Background="#CC151515" Padding="12,8">
-                    <TextBlock Text="Pixiv PID: 132125952" Foreground="White" FontSize="11" HorizontalAlignment="Right" />
+                <Border VerticalAlignment="Bottom" Background="{DynamicResource StudioPanelBrush}" Padding="12,8">
+                    <TextBlock Text="Pixiv PID: 132125952" Foreground="{DynamicResource StudioTextBrush}" FontSize="11" HorizontalAlignment="Right" />
                 </Border>
             </Grid>
         </Grid>

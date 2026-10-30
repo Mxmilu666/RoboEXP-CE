@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RoboExp.App.Localization;
@@ -31,6 +32,8 @@ public sealed partial class OptionsViewModel : ObservableObject
         _selectedRobotType = env.RobotType;
         _languageIndex = env.Language switch { UiLanguage.CHS => 1, UiLanguage.CHT => 2, _ => 0 };
         _themeIndex = (int)s.Theme;
+        _flowBackgroundIndex = (int)s.FlowBackground;
+        _flowBackgroundColor = s.FlowBackgroundColor;
         LoadSoftTypes(env.Install);
         UpdateDetected();
     }
@@ -54,6 +57,29 @@ public sealed partial class OptionsViewModel : ObservableObject
 
     [ObservableProperty]
     private int _themeIndex;
+
+    public IReadOnlyList<string> FlowBackgroundModes =>
+    [
+        Localizer.Instance.T("Port:FlowBackground.Default"),
+        Localizer.Instance.T("Port:FlowBackground.Classic"),
+        Localizer.Instance.T("Port:FlowBackground.Custom"),
+    ];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCustomFlowBackground), nameof(FlowBackgroundError))]
+    [NotifyCanExecuteChangedFor(nameof(OkCommand))]
+    private int _flowBackgroundIndex;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FlowBackgroundError), nameof(FlowBackgroundPreview))]
+    [NotifyCanExecuteChangedFor(nameof(OkCommand))]
+    private string _flowBackgroundColor;
+
+    public bool IsCustomFlowBackground => FlowBackgroundIndex == (int)FlowBackgroundMode.Custom;
+    private bool CanAccept() => !IsCustomFlowBackground || FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out _);
+    public string FlowBackgroundError => CanAccept() ? "" : Localizer.Instance.T("Port:FlowBackground.Invalid");
+    public IBrush FlowBackgroundPreview => FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out var color)
+        ? new SolidColorBrush(color) : Brushes.Transparent;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RobotTypeDescription))]
@@ -159,9 +185,10 @@ public sealed partial class OptionsViewModel : ObservableObject
         ToolchainBin = _env.Settings.ToolchainBin ?? "";
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAccept))]
     private void Ok()
     {
+        if (!CanAccept()) return;
         var s = _env.Settings;
         var pathsChanged = NullIfEmpty(VendorPath) != s.VendorPath || NullIfEmpty(ToolchainBin) != s.ToolchainBin;
         s.VendorPath = NullIfEmpty(VendorPath);
@@ -171,8 +198,12 @@ public sealed partial class OptionsViewModel : ObservableObject
         s.Language = SelectedLanguage;
         s.RobotType = SelectedRobotType.Name;
         s.Theme = (AppTheme)ThemeIndex;
+        s.FlowBackground = (FlowBackgroundMode)FlowBackgroundIndex;
+        if (FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out var color))
+            s.FlowBackgroundColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
         _env.SaveSettings();
         ThemeService.Apply(s.Theme);
+        _env.NotifyAppearanceChanged();
         if (pathsChanged || SelectedLanguage != _env.Language) _env.Reload();
         if (SelectedRobotType != _env.RobotType) _env.SetRobotType(SelectedRobotType);
         Accepted = true;

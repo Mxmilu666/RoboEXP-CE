@@ -8,6 +8,7 @@ using Avalonia.Styling;
 using Avalonia.Threading;
 using RoboExp.App.Flow.Editing;
 using RoboExp.App.Palette;
+using RoboExp.App.Services;
 using RoboExp.Core.Flow;
 using RoboExp.Core.Model.Graphics;
 using AvPoint = Avalonia.Point;
@@ -50,12 +51,8 @@ public sealed class FlowCanvas : Control
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
         Cursor = FlowCursors.AutoToolOver;
-        ActualThemeVariantChanged += (_, _) =>
-        {
-            _theme = ActualThemeVariant == ThemeVariant.Dark ? DarkTheme : LightTheme;
-            InvalidateVisual();
-        };
-        _theme = ActualThemeVariant == ThemeVariant.Dark ? DarkTheme : LightTheme;
+        ActualThemeVariantChanged += (_, _) => UpdateAppearance();
+        UpdateAppearance();
     }
 
     public FlowDocumentViewModel? Document
@@ -69,6 +66,7 @@ public sealed class FlowCanvas : Control
                 _doc.SelectionChanged -= OnModelChanged;
                 _doc.PropertyChanged -= OnDocPropertyChanged;
                 _doc.ScrollIntoViewRequested -= OnScrollIntoViewRequested;
+                _doc.Env.AppearanceChanged -= OnAppearanceChanged;
             }
             _doc = value;
             if (_doc != null)
@@ -77,12 +75,26 @@ public sealed class FlowCanvas : Control
                 _doc.SelectionChanged += OnModelChanged;
                 _doc.PropertyChanged += OnDocPropertyChanged;
                 _doc.ScrollIntoViewRequested += OnScrollIntoViewRequested;
+                if (VisualRoot != null) _doc.Env.AppearanceChanged += OnAppearanceChanged;
             }
             _working = FlowWorking.NormalMove;
             _lastFoundObj = null;
             _lastFoundPort = null;
-            InvalidateVisual();
+            UpdateAppearance();
         }
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (_doc != null) _doc.Env.AppearanceChanged += OnAppearanceChanged;
+        UpdateAppearance();
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_doc != null) _doc.Env.AppearanceChanged -= OnAppearanceChanged;
+        base.OnDetachedFromVisualTree(e);
     }
 
     /// <summary>A palette item chosen from the context menu, placed by the next left click (PanelIcon.DraggingBaseNode).</summary>
@@ -203,12 +215,24 @@ public sealed class FlowCanvas : Control
 
     private static readonly CanvasTheme LightTheme = new(true);
     private static readonly CanvasTheme DarkTheme = new(false);
-    private CanvasTheme _theme;
+    private CanvasTheme _theme = LightTheme;
+    private IBrush _backgroundBrush = LightTheme.CanvasBrush;
+
+    private void OnAppearanceChanged(object? sender, EventArgs e) => UpdateAppearance();
+
+    private void UpdateAppearance()
+    {
+        var color = FlowAppearance.Background(_doc?.Env.Settings, ActualThemeVariant == ThemeVariant.Dark,
+            _doc?.Config.BackColor ?? FlowViewConfig.Default.BackColor);
+        _backgroundBrush = new SolidColorBrush(color);
+        _theme = FlowAppearance.UseDarkInk(color) ? LightTheme : DarkTheme;
+        InvalidateVisual();
+    }
 
     public override void Render(DrawingContext ctx)
     {
         var config = _doc?.Config ?? FlowViewConfig.Default;
-        ctx.FillRectangle(_theme.CanvasBrush, new Rect(Bounds.Size));
+        ctx.FillRectangle(_backgroundBrush, new Rect(Bounds.Size));
         if (_doc == null) return;
         var scroll = Scroll;
         using (ctx.PushTransform(Matrix.CreateTranslation(-scroll.X, -scroll.Y)))

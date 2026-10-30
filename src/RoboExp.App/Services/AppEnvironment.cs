@@ -31,6 +31,11 @@ public sealed class AppEnvironment
     /// <summary>Raised after <see cref="Reload"/> or <see cref="SetRobotType"/>.</summary>
     public event EventHandler? Changed;
 
+    /// <summary>Workspace appearance changed without reloading robot libraries.</summary>
+    public event EventHandler? AppearanceChanged;
+
+    public void NotifyAppearanceChanged() => AppearanceChanged?.Invoke(this, EventArgs.Empty);
+
     public void Reload()
     {
         (Install, InstallError) = ResolveInstall(Settings.VendorPath);

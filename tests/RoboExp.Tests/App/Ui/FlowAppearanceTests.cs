@@ -64,4 +64,39 @@ public class FlowAppearanceTests
             }
             return Task.CompletedTask;
         });
+
+    [Fact]
+    public Task Image_selection_is_previewed_and_only_changes_saved_background_on_ok() => UiHarness.RunAsync(ui =>
+    {
+        var env = ui.Vm.Env;
+        var image = Path.Combine(ui.WorkDir, "background.png");
+        using (var stream = File.Create(image))
+        using (var surface = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize(4, 4)))
+            surface.Save(stream, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
+        var invalid = Path.Combine(ui.WorkDir, "invalid.png");
+        File.WriteAllText(invalid, "not an image");
+
+        var options = new OptionsViewModel(env, ui.Window);
+        try
+        {
+            Assert.True(options.TrySetFlowImage(image));
+            Assert.NotNull(options.FlowImagePreview);
+            Assert.False(options.TrySetFlowImage(invalid));
+            Assert.Equal("background.png", options.FlowImageName);
+            Assert.Null(env.Settings.FlowBackgroundImagePath);
+            options.OkCommand.Execute(null);
+            Assert.Equal(image, AppSettings.Load(env.SettingsPath).FlowBackgroundImagePath);
+        }
+        finally { options.ReleaseFlowImagePreview(); }
+
+        var remove = new OptionsViewModel(env, ui.Window);
+        remove.RemoveFlowImageCommand.Execute(null);
+        remove.CancelCommand.Execute(null);
+        Assert.Equal(image, env.Settings.FlowBackgroundImagePath);
+        var confirmed = new OptionsViewModel(env, ui.Window);
+        confirmed.RemoveFlowImageCommand.Execute(null);
+        confirmed.OkCommand.Execute(null);
+        Assert.Null(AppSettings.Load(env.SettingsPath).FlowBackgroundImagePath);
+        return Task.CompletedTask;
+    });
 }

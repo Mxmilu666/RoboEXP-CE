@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Avalonia.Threading;
 using RoboExp.App.ViewModels;
 
@@ -5,6 +6,8 @@ namespace RoboExp.App.Mcp;
 
 public sealed class McpController(MainWindowViewModel workspace) : IAsyncDisposable
 {
+    private static readonly JsonSerializerOptions ConfigurationJson = new() { WriteIndented = true };
+
     private McpPipeHost? _host;
     private readonly SemaphoreSlim _requests = new(1, 1);
     public bool IsEnabled => _host != null;
@@ -41,17 +44,18 @@ public sealed class McpController(MainWindowViewModel workspace) : IAsyncDisposa
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    public string ConnectionPrompt
+    internal (string Prompt, string Json) ConnectionDetails
     {
         get
         {
-            if (_host == null) return "";
+            if (_host == null) return ("", "");
             var command = Environment.ProcessPath ?? throw new InvalidOperationException("Cannot locate RoboEXP executable.");
             var args = new List<string>();
             if (Path.GetFileNameWithoutExtension(command).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
                 args.Add(typeof(McpController).Assembly.Location);
             args.AddRange(["--mcp", "--pipe", _host.PipeName, "--token", _host.Token]);
-            return McpConnectionPrompt.Create(command, args);
+            var configuration = new { mcpServers = new { roboexp = new { command, args } } };
+            return (McpConnectionPrompt.Create(command, args), JsonSerializer.Serialize(configuration, ConfigurationJson));
         }
     }
 

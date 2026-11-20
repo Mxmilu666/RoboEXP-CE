@@ -36,6 +36,9 @@ public sealed class AppEnvironment
 
     public void NotifyAppearanceChanged() => AppearanceChanged?.Invoke(this, EventArgs.Empty);
 
+    internal event EventHandler? AutoSaveIntervalChanged;
+    internal void NotifyAutoSaveIntervalChanged() => AutoSaveIntervalChanged?.Invoke(this, EventArgs.Empty);
+
     public void Reload()
     {
         (Install, InstallError) = ResolveInstall(Settings.VendorPath);

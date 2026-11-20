@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Xml.Linq;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RoboExp.App.Localization;
@@ -29,11 +31,13 @@ public sealed partial class OptionsViewModel : ObservableObject
         _toolchainBin = s.ToolchainBin ?? "";
         _compileBeforeDownload = s.CompileBeforeDownload;
         _showMessageAfterDownload = s.ShowMessageAfterDownload;
+        _autoSaveInterval = s.AutoSaveIntervalMinutes.ToString(CultureInfo.InvariantCulture);
         _selectedRobotType = env.RobotType;
         _languageIndex = env.Language switch { UiLanguage.CHS => 1, UiLanguage.CHT => 2, _ => 0 };
         _themeIndex = (int)s.Theme;
         _flowBackgroundIndex = (int)s.FlowBackground;
         _flowBackgroundColor = s.FlowBackgroundColor;
+        _flowBackgroundImagePath = s.FlowBackgroundImagePath;
         LoadSoftTypes(env.Install);
         UpdateDetected();
     }
@@ -76,10 +80,53 @@ public sealed partial class OptionsViewModel : ObservableObject
     private string _flowBackgroundColor;
 
     public bool IsCustomFlowBackground => FlowBackgroundIndex == (int)FlowBackgroundMode.Custom;
-    private bool CanAccept() => !IsCustomFlowBackground || FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out _);
-    public string FlowBackgroundError => CanAccept() ? "" : Localizer.Instance.T("Port:FlowBackground.Invalid");
+    private bool IsFlowBackgroundValid => !IsCustomFlowBackground || FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out _);
+    public string FlowBackgroundError => IsFlowBackgroundValid ? "" : Localizer.Instance.T("Port:FlowBackground.Invalid");
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(OkCommand))]
+    private string _autoSaveInterval;
+
+    private bool TryGetAutoSaveInterval(out int minutes) =>
+        int.TryParse(AutoSaveInterval, NumberStyles.None, CultureInfo.InvariantCulture, out minutes)
+        && minutes is >= 0 and <= AppSettings.MaxAutoSaveIntervalMinutes;
+
+    private bool CanAccept() => IsFlowBackgroundValid && TryGetAutoSaveInterval(out _);
     public IBrush FlowBackgroundPreview => FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out var color)
         ? new SolidColorBrush(color) : Brushes.Transparent;
+
+    private string? _flowBackgroundImagePath;
+    private Bitmap? _flowImagePreview;
+
+    public Bitmap? FlowImagePreview => _flowImagePreview;
+    public bool HasFlowImage => _flowBackgroundImagePath != null;
+    public string? FlowImageName => Path.GetFileName(_flowBackgroundImagePath);
+
+    internal void LoadFlowImagePreview() => SetFlowImage(_flowBackgroundImagePath, FlowBackgroundImage.Load(_flowBackgroundImagePath, 256));
+
+    internal void ReleaseFlowImagePreview() => SetFlowImage(_flowBackgroundImagePath, null);
+
+    private void SetFlowImage(string? path, Bitmap? preview)
+    {
+        _flowImagePreview?.Dispose();
+        _flowImagePreview = preview;
+        _flowBackgroundImagePath = path;
+        OnPropertyChanged(nameof(FlowImagePreview));
+        OnPropertyChanged(nameof(FlowImageName));
+        OnPropertyChanged(nameof(HasFlowImage));
+        RemoveFlowImageCommand.NotifyCanExecuteChanged();
+    }
+
+    internal bool TrySetFlowImage(string path)
+    {
+        var preview = FlowBackgroundImage.Load(path, 256);
+        if (preview == null) return false;
+        SetFlowImage(path, preview);
+        return true;
+    }
+
+    [RelayCommand(CanExecute = nameof(HasFlowImage))]
+    private void RemoveFlowImage() => SetFlowImage(null, null);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RobotTypeDescription))]
@@ -188,20 +235,24 @@ public sealed partial class OptionsViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAccept))]
     private void Ok()
     {
-        if (!CanAccept()) return;
+        if (!IsFlowBackgroundValid || !TryGetAutoSaveInterval(out var autoSaveInterval)) return;
         var s = _env.Settings;
         var pathsChanged = NullIfEmpty(VendorPath) != s.VendorPath || NullIfEmpty(ToolchainBin) != s.ToolchainBin;
         s.VendorPath = NullIfEmpty(VendorPath);
         s.ToolchainBin = NullIfEmpty(ToolchainBin);
         s.CompileBeforeDownload = CompileBeforeDownload;
         s.ShowMessageAfterDownload = ShowMessageAfterDownload;
+        var autoSaveChanged = s.AutoSaveIntervalMinutes != autoSaveInterval;
+        s.AutoSaveIntervalMinutes = autoSaveInterval;
         s.Language = SelectedLanguage;
         s.RobotType = SelectedRobotType.Name;
         s.Theme = (AppTheme)ThemeIndex;
         s.FlowBackground = (FlowBackgroundMode)FlowBackgroundIndex;
         if (FlowAppearance.TryParseCustomColor(FlowBackgroundColor, out var color))
             s.FlowBackgroundColor = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+        s.FlowBackgroundImagePath = _flowBackgroundImagePath;
         _env.SaveSettings();
+        if (autoSaveChanged) _env.NotifyAutoSaveIntervalChanged();
         ThemeService.Apply(s.Theme);
         _env.NotifyAppearanceChanged();
         if (pathsChanged || SelectedLanguage != _env.Language) _env.Reload();

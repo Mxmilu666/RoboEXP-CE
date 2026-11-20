@@ -5,6 +5,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using RoboExp.App.Documents;
 using RoboExp.App.Localization;
 using RoboExp.App.Services;
@@ -18,6 +19,8 @@ public partial class MainWindow : Window, IDialogService
     private bool _closeConfirmed;
     private bool _startupBoundsApplied;
     private Mcp.McpController? _mcp;
+    private readonly DispatcherTimer _autoSaveTimer = new(DispatcherPriority.Background);
+    private bool _timedSaveInProgress;
 
     private void OnMcpClick(object? sender, RoutedEventArgs e)
     {
@@ -29,6 +32,8 @@ public partial class MainWindow : Window, IDialogService
 
     protected override async void OnClosed(EventArgs e)
     {
+        _autoSaveTimer.Stop();
+        if (_vm != null) _vm.Env.AutoSaveIntervalChanged -= OnAutoSaveIntervalChanged;
         if (_mcp != null) await _mcp.DisposeAsync();
         base.OnClosed(e);
     }
@@ -38,6 +43,7 @@ public partial class MainWindow : Window, IDialogService
         InitializeComponent();
         RecentMenu.SubmenuOpened += (_, _) => FillRecentMenu();
         Deactivated += OnWindowDeactivated;
+        _autoSaveTimer.Tick += OnTimedAutoSave;
     }
 
     protected override void OnOpened(EventArgs e)
@@ -48,6 +54,7 @@ public partial class MainWindow : Window, IDialogService
             // Native frame metrics and DPI can settle only after Show (especially with mixed-DPI monitors).
             Avalonia.Threading.Dispatcher.UIThread.Post(FitStartupBounds, Avalonia.Threading.DispatcherPriority.Loaded);
         }
+        UpdateAutoSaveTimer();
         base.OnOpened(e);
     }
 
@@ -70,6 +77,27 @@ public partial class MainWindow : Window, IDialogService
         }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
+    private void OnAutoSaveIntervalChanged(object? sender, EventArgs e) => UpdateAutoSaveTimer();
+
+    private void UpdateAutoSaveTimer()
+    {
+        _autoSaveTimer.Stop();
+        if (IsVisible && _vm?.Env.Settings.AutoSaveIntervalMinutes is > 0 and var minutes)
+        {
+            _autoSaveTimer.Interval = TimeSpan.FromMinutes(minutes);
+            _autoSaveTimer.Start();
+        }
+    }
+
+    private async void OnTimedAutoSave(object? sender, EventArgs e)
+    {
+        if (!IsVisible || _closeConfirmed || _timedSaveInProgress || _vm is not { IsWorkspaceBusy: false } vm ||
+            OwnedWindows.Any(w => w.IsVisible && w is not Mcp.McpConnectionWindow)) return;
+        _timedSaveInProgress = true;
+        try { await vm.AutoSaveDocumentsAsync(); }
+        finally { _timedSaveInProgress = false; }
+    }
+
     private void OnWindowDeactivated(object? sender, EventArgs e)
     {
         Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
@@ -84,7 +112,10 @@ public partial class MainWindow : Window, IDialogService
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
+        if (_vm != null) _vm.Env.AutoSaveIntervalChanged -= OnAutoSaveIntervalChanged;
         _vm = DataContext as MainWindowViewModel;
+        if (_vm != null) _vm.Env.AutoSaveIntervalChanged += OnAutoSaveIntervalChanged;
+        UpdateAutoSaveTimer();
         if (_vm == null) return;
 
         var icons = _vm.Panel(PanelIds.Icons);

@@ -464,7 +464,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (doc == null) { ShowOutput(loc.T("NoInputFile")); return null; }
         if (doc.FilePath == null && !await SaveDocumentAsync(doc, saveAs: true)) return null;
         BuildInput? input;
-        try { input = await doc.PrepareBuildAsync(); }
+        try { input = await PrepareBuildAsync(doc); }
         catch (BuildRejectedException e) { ShowOutput(e.Message); return null; }
         catch (EncoderFallbackException) { ShowOutput(loc.T("Port:SaveFailed") + loc.T("Port:NotGbk")); return null; }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { ShowOutput(loc.T("Port:SaveFailed") + e.Message); return null; }
@@ -552,6 +552,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         Panel(PanelIds.Output).IsVisible = true;
     }
 
+    private async Task<BuildInput?> PrepareBuildAsync(DocumentViewModel doc)
+    {
+        // Preparing a build may write the same files as auto-save.
+        await _saveGate.WaitAsync();
+        try { return await doc.PrepareBuildAsync(); }
+        finally { _saveGate.Release(); }
+    }
+
     [RelayCommand(CanExecute = nameof(HasActiveDocument))]
     private async Task Download()
     {
@@ -559,7 +567,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         var doc = ActiveDocument!;
         if (doc.FilePath == null && !await SaveDocumentAsync(doc, saveAs: true)) return;
         BuildInput? input;
-        try { input = await doc.PrepareBuildAsync(); }
+        try { input = await PrepareBuildAsync(doc); }
         catch (BuildRejectedException e) { ShowOutput(e.Message); return; }
         if (input == null) return;
         if (input.Group == BuildGroup.Func)

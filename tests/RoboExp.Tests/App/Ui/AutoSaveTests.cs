@@ -66,6 +66,35 @@ public class AutoSaveTests
         Assert.False(doc.IsDirty);
     });
 
+    [Fact]
+    public Task Invalid_interval_and_cancel_preserve_saved_schedule() => UiHarness.RunAsync(ui =>
+    {
+        var env = ui.Vm.Env;
+        var options = new OptionsViewModel(env, ui.Window);
+        Assert.Equal("1", options.AutoSaveInterval);
+        foreach (var invalid in new[] { "", "-1", "1.5", "1441", "10000000000" })
+        {
+            options.AutoSaveInterval = invalid;
+            Assert.False(options.OkCommand.CanExecute(null));
+        }
+
+        options.AutoSaveInterval = "5";
+        Assert.True(options.OkCommand.CanExecute(null));
+        options.OkCommand.Execute(null);
+        Assert.Equal(5, AppSettings.Load(env.SettingsPath).AutoSaveIntervalMinutes);
+
+        var cancelled = new OptionsViewModel(env, ui.Window) { AutoSaveInterval = "0" };
+        cancelled.CancelCommand.Execute(null);
+        Assert.Equal(5, env.Settings.AutoSaveIntervalMinutes);
+        Assert.Equal(5, AppSettings.Load(env.SettingsPath).AutoSaveIntervalMinutes);
+
+        File.WriteAllText(env.SettingsPath, "{\"AutoSaveIntervalMinutes\":-1,\"RobotType\":\"E7RCU\"}");
+        var loaded = AppSettings.Load(env.SettingsPath);
+        Assert.Equal(1, loaded.AutoSaveIntervalMinutes);
+        Assert.Equal("E7RCU", loaded.RobotType);
+        return Task.CompletedTask;
+    });
+
     private static async Task<CodeDocumentViewModel> OpenCodeAsync(UiHarness ui, string name)
     {
         var path = Path.Combine(ui.WorkDir, name);

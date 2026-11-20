@@ -47,6 +47,23 @@
                         <TextBlock Text="{l:Tr Port:FlowBackground.Hint, Plain=True}" Foreground="{DynamicResource StudioMutedBrush}" FontSize="11" />
                         <TextBlock Text="{Binding FlowBackgroundError}" Foreground="{DynamicResource StudioErrorBrush}" TextWrapping="Wrap" />
                     </StackPanel>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,2,0,6">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="{l:Tr Port:FlowBackground.Image, Plain=True}" />
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Button Name="BrowseFlowImage" Content="{l:Tr Port:FlowBackground.ChooseImage, Plain=True}" Click="OnBrowseFlowImage" />
+                                <Button Name="RemoveFlowImage" Content="{l:Tr Port:FlowBackground.RemoveImage, Plain=True}" Command="{Binding RemoveFlowImageCommand}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding FlowImageName}" IsVisible="{Binding HasFlowImage}" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource StudioMutedBrush}" />
+                        </StackPanel>
+                        <Image Grid.Column="1" Name="FlowImagePreview" Source="{Binding FlowImagePreview}" IsVisible="{Binding HasFlowImage}"
+                               Width="108" Height="60" Stretch="Uniform" />
+                    </Grid>
+                    <TextBlock Text="{l:Tr Port:AutoSaveInterval, Plain=True}" />
+                    <TextBox x:Name="AutoSaveInterval" Text="{Binding AutoSaveInterval, Mode=TwoWay}" Width="100" HorizontalAlignment="Left"
+                             AutomationProperties.Name="{l:Tr Port:AutoSaveInterval, Plain=True}" />
+                    <TextBlock Text="{l:Tr Port:AutoSaveIntervalHint, Plain=True}" Foreground="{DynamicResource StudioMutedBrush}" TextWrapping="Wrap" />
                     <CheckBox Content="{l:Tr Options:chkCompilerBeforeDownload.Text}" IsChecked="{Binding CompileBeforeDownload}" />
                     <CheckBox Content="{l:Tr Options:chkShowMsgAfterDownload.Text}" IsChecked="{Binding ShowMessageAfterDownload}" />
                 </StackPanel>

@@ -18,6 +18,9 @@ public sealed class AppSettings
 {
     public const string ConfigDirEnvVar = "ROBOEXP_CONFIG_DIR";
     public const int MaxRecentFiles = 10;
+    internal const int MaxAutoSaveIntervalMinutes = 1440;
+
+    private int _autoSaveIntervalMinutes = 1;
 
     public string? VendorPath { get; set; }
     public string? ToolchainBin { get; set; }
@@ -25,9 +28,15 @@ public sealed class AppSettings
     public AppTheme Theme { get; set; } = AppTheme.System;
     public FlowBackgroundMode FlowBackground { get; set; } = FlowBackgroundMode.Default;
     public string FlowBackgroundColor { get; set; } = "#8080C0";
+    public string? FlowBackgroundImagePath { get; set; }
     public string? RobotType { get; set; }
     public bool CompileBeforeDownload { get; set; } = true;
     public bool ShowMessageAfterDownload { get; set; } = true;
+    public int AutoSaveIntervalMinutes
+    {
+        get => _autoSaveIntervalMinutes;
+        set => _autoSaveIntervalMinutes = value is >= 0 and <= MaxAutoSaveIntervalMinutes ? value : 1;
+    }
     public List<string> RecentFiles { get; set; } = [];
     public PaneLayout Layout { get; set; } = new();
 

@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using RoboExp.App.Flow.Editing;
@@ -94,6 +95,7 @@ public sealed class FlowCanvas : Control
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         if (_doc != null) _doc.Env.AppearanceChanged -= OnAppearanceChanged;
+        ReleaseBackgroundImage();
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -217,6 +219,27 @@ public sealed class FlowCanvas : Control
     private static readonly CanvasTheme DarkTheme = new(false);
     private CanvasTheme _theme = LightTheme;
     private IBrush _backgroundBrush = LightTheme.CanvasBrush;
+    private string? _backgroundImagePath;
+    private Bitmap? _backgroundImage;
+    private ImageBrush? _backgroundImageBrush;
+
+    private void UpdateBackgroundImage()
+    {
+        var path = VisualRoot == null ? null : _doc?.Env.Settings.FlowBackgroundImagePath;
+        if (path == _backgroundImagePath) return;
+        ReleaseBackgroundImage();
+        _backgroundImagePath = path;
+        _backgroundImage = FlowBackgroundImage.Load(path);
+        if (_backgroundImage != null) _backgroundImageBrush = FlowBackgroundImage.CreateBrush(_backgroundImage);
+    }
+
+    private void ReleaseBackgroundImage()
+    {
+        _backgroundImageBrush = null;
+        _backgroundImage?.Dispose();
+        _backgroundImage = null;
+        _backgroundImagePath = null;
+    }
 
     private void OnAppearanceChanged(object? sender, EventArgs e) => UpdateAppearance();
 
@@ -226,13 +249,16 @@ public sealed class FlowCanvas : Control
             _doc?.Config.BackColor ?? FlowViewConfig.Default.BackColor);
         _backgroundBrush = new SolidColorBrush(color);
         _theme = FlowAppearance.UseDarkInk(color) ? LightTheme : DarkTheme;
+        UpdateBackgroundImage();
         InvalidateVisual();
     }
 
     public override void Render(DrawingContext ctx)
     {
         var config = _doc?.Config ?? FlowViewConfig.Default;
-        ctx.FillRectangle(_backgroundBrush, new Rect(Bounds.Size));
+        var viewport = new Rect(Bounds.Size);
+        ctx.FillRectangle(_backgroundBrush, viewport);
+        if (_backgroundImageBrush != null) ctx.FillRectangle(_backgroundImageBrush, viewport);
         if (_doc == null) return;
         var scroll = Scroll;
         using (ctx.PushTransform(Matrix.CreateTranslation(-scroll.X, -scroll.Y)))

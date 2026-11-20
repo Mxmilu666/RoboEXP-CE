@@ -125,7 +125,7 @@ public sealed class McpPipeHost : IAsyncDisposable
             McpPipeProtocol.Response response;
             if (request is null || !IsAuthorized(request.Token))
             {
-                response = Error("Unauthorized local MCP session. Use the current configuration shown in RoboEXP CE.");
+                response = Error("Unauthorized local MCP session. Ask the user for a fresh connection prompt from RoboEXP CE.");
             }
             else
             {

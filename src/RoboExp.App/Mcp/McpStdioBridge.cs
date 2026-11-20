@@ -8,7 +8,7 @@ namespace RoboExp.App.Mcp;
 /// <summary>Headless MCP entry point. This must run before initializing Avalonia.</summary>
 public static class McpStdioBridge
 {
-    private const string Unavailable = "Local MCP access is disabled or the RoboEXP CE session is no longer available. Enable MCP in the app and use its current configuration.";
+    private const string Unavailable = "Local MCP access is disabled or the RoboEXP CE session is no longer available. Ask the user to enable MCP in the app and copy a fresh connection prompt.";
     private static readonly JsonElement EmptyArguments = JsonSerializer.SerializeToElement(new { });
 
     public static async Task<int> RunAsync(string[] args)

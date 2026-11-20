@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Avalonia.Threading;
 using RoboExp.App.ViewModels;
 
@@ -42,7 +41,7 @@ public sealed class McpController(MainWindowViewModel workspace) : IAsyncDisposa
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    public string Configuration
+    public string ConnectionPrompt
     {
         get
         {
@@ -52,7 +51,7 @@ public sealed class McpController(MainWindowViewModel workspace) : IAsyncDisposa
             if (Path.GetFileNameWithoutExtension(command).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
                 args.Add(typeof(McpController).Assembly.Location);
             args.AddRange(["--mcp", "--pipe", _host.PipeName, "--token", _host.Token]);
-            return JsonSerializer.Serialize(new { mcpServers = new Dictionary<string, object> { ["roboexp"] = new { command, args } } }, new JsonSerializerOptions { WriteIndented = true });
+            return McpConnectionPrompt.Create(command, args);
         }
     }
 

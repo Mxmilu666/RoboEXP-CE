@@ -9,7 +9,7 @@ namespace RoboExp.App.Mcp;
 public sealed class McpConnectionWindow : Window
 {
     private readonly McpController _controller;
-    private readonly TextBox _configuration;
+    private readonly TextBox _prompt;
     private readonly Button _toggle;
     private readonly Button _copy;
     private readonly TextBlock _status;
@@ -25,7 +25,7 @@ public sealed class McpConnectionWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         ShowInTaskbar = false;
         _status = new TextBlock { TextWrapping = Avalonia.Media.TextWrapping.Wrap };
-        _configuration = new TextBox { Name = "McpConfiguration", IsReadOnly = true, AcceptsReturn = true, TextWrapping = Avalonia.Media.TextWrapping.Wrap };
+        _prompt = new TextBox { Name = "McpPrompt", IsReadOnly = true, AcceptsReturn = true, TextWrapping = Avalonia.Media.TextWrapping.Wrap };
         _toggle = new Button { Name = "McpToggle", MinWidth = 100 };
         _copy = new Button { Name = "McpCopy", Content = T("Mcp.Copy"), MinWidth = 100 };
         _toggle.Click += async (_, _) =>
@@ -39,7 +39,7 @@ public sealed class McpConnectionWindow : Window
         };
         _copy.Click += async (_, _) =>
         {
-            if (Clipboard is { } clipboard && _controller.IsEnabled) await clipboard.SetTextAsync(_controller.Configuration);
+            if (Clipboard is { } clipboard && _controller.IsEnabled) await clipboard.SetTextAsync(_controller.ConnectionPrompt);
         };
         var close = new Button { Content = T("Setup.Close"), IsCancel = true };
         close.Click += (_, _) => Close();
@@ -47,7 +47,7 @@ public sealed class McpConnectionWindow : Window
         var grid = new Grid { Margin = new Thickness(16), RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"), RowSpacing = 12 };
         grid.Children.Add(new TextBlock { Text = T("Mcp.Help"), TextWrapping = Avalonia.Media.TextWrapping.Wrap });
         Grid.SetRow(_status, 1); grid.Children.Add(_status);
-        Grid.SetRow(_configuration, 2); grid.Children.Add(_configuration);
+        Grid.SetRow(_prompt, 2); grid.Children.Add(_prompt);
         Grid.SetRow(buttons, 3); grid.Children.Add(buttons);
         Content = grid;
         controller.Changed += OnChanged;
@@ -60,7 +60,7 @@ public sealed class McpConnectionWindow : Window
     {
         _toggle.Content = T(_controller.IsEnabled ? "Mcp.Stop" : "Mcp.Start");
         _copy.IsEnabled = _controller.IsEnabled;
-        _configuration.Text = _controller.Configuration;
+        _prompt.Text = _controller.ConnectionPrompt;
         _status.Text = T(_controller.IsEnabled ? "Mcp.Enabled" : "Mcp.Disabled");
     }
     private static string T(string key) => Localizer.Instance.T("Port:" + key);

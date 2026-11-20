@@ -17,6 +17,21 @@ public partial class MainWindow : Window, IDialogService
     private MainWindowViewModel? _vm;
     private bool _closeConfirmed;
     private bool _startupBoundsApplied;
+    private Mcp.McpController? _mcp;
+
+    private void OnMcpClick(object? sender, RoutedEventArgs e)
+    {
+        if (OwnedWindows.OfType<Mcp.McpConnectionWindow>().FirstOrDefault() is { } existing) { existing.Activate(); return; }
+        _mcp ??= new Mcp.McpController(Vm);
+        // Non-modal: AI edits remain available while the connection settings are on screen.
+        new Mcp.McpConnectionWindow(_mcp).Show(this);
+    }
+
+    protected override async void OnClosed(EventArgs e)
+    {
+        if (_mcp != null) await _mcp.DisposeAsync();
+        base.OnClosed(e);
+    }
 
     public MainWindow()
     {

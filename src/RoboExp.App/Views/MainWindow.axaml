@@ -184,6 +184,7 @@
                 <MenuItem Header="{l:Tr Options}" Command="{Binding OptionsCommand}">
                     <MenuItem.Icon><Image Source="{svc:FlatImage Options}" /></MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="{l:Tr Port:Mcp.Title}" Click="OnMcpClick" />
             </MenuItem>
             <MenuItem Header="{l:Tr Window}">
                 <MenuItem Header="{l:Tr NextWindow}" Command="{Binding NextWindowCommand}">

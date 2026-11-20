@@ -11,6 +11,14 @@ public static class PortStrings
     private static readonly Dictionary<string, (string En, string Chs, string Cht)> Table = new(StringComparer.Ordinal)
     {
         ["Paths"] = ("Paths", "路径", "路徑"),
+        ["Mcp.Title"] = ("AI / MCP", "AI / MCP", "AI / MCP"),
+        ["Mcp.Help"] = ("Enable access only for a trusted AI client. Copy this stdio MCP configuration into your client, then keep RoboEXP open. AI can read and edit ALL open code/flowchart documents and save named files. Changes appear immediately, support Undo and follow normal auto-save. No shell or robot download access. Treat the session token as a password; it changes when restarted.", "仅为可信 AI 客户端开启。将下方 stdio MCP 配置复制到客户端，并保持 RoboEXP 打开。AI 可读取、修改所有已打开的代码与流程图工程，并保存已命名文件；修改立即显示、支持撤销，并遵循正常自动保存。不会开放命令执行或机器人下载。会话令牌相当于密码，重新开启后会更换。", "僅為可信 AI 用戶端啟用。將下方 stdio MCP 設定複製至用戶端，並保持 RoboEXP 開啟。AI 可讀取、修改所有已開啟的代碼及流程圖工程，並儲存已命名檔案；修改立即顯示、支援復原，並遵循一般自動儲存。不開放命令執行或機器人下載。工作階段權杖等同密碼，重新啟用後會更換。"),
+        ["Mcp.Start"] = ("Enable MCP", "开启 MCP", "啟用 MCP"),
+        ["Mcp.Stop"] = ("Disable MCP", "关闭 MCP", "停用 MCP"),
+        ["Mcp.Copy"] = ("Copy configuration", "复制连接配置", "複製連線設定"),
+        ["Mcp.Enabled"] = ("Enabled for this session. Only programs running as your OS user with this token can connect.", "本次会话已开启，仅当前系统用户持令牌的程序可连接。", "本次工作階段已啟用，僅目前系統使用者持權杖的程式可連線。"),
+        ["Mcp.Disabled"] = ("Disabled. Enable to generate a new session configuration.", "未开启。开启后生成本次会话的连接配置。", "未啟用。啟用後產生本次工作階段的連線設定。"),
+        ["Mcp.Failed"] = ("Could not start the local MCP connection.", "无法启动本地 MCP 连接。", "無法啟動本機 MCP 連線。"),
         ["Theme"] = ("Theme:", "主题:", "主題:"),
         ["Theme.System"] = ("Auto (follow system)", "自动（跟随系统）", "自動（跟隨系統）"),
         ["Theme.Light"] = ("Light", "浅色", "淺色"),

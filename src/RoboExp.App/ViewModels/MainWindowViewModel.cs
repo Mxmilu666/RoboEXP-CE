@@ -285,6 +285,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>Saves (prompting for a path when untitled or Save As). Returns false if cancelled or failed.</summary>
     public Task<bool> SaveDocumentAsync(DocumentViewModel doc, bool saveAs) => SaveDocumentCoreAsync(doc, saveAs, autoSave: false);
 
+    internal bool IsWorkspaceBusy => _saveGate.CurrentCount == 0 || CompileCommand.IsRunning || DownloadCommand.IsRunning;
+
+    internal async Task SaveForMcpAsync(DocumentViewModel doc, Action validateRevision, CancellationToken ct)
+    {
+        await _saveGate.WaitAsync(ct);
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            validateRevision();
+            if (!Documents.Contains(doc) || doc.FilePath == null) throw new InvalidOperationException("Document must be open and named.");
+            await doc.SaveAsync(doc.FilePath);
+        }
+        finally { _saveGate.Release(); }
+    }
+
     private async Task<bool> SaveDocumentCoreAsync(DocumentViewModel doc, bool saveAs, bool autoSave)
     {
         await _saveGate.WaitAsync();

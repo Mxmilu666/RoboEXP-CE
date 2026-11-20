@@ -16,12 +16,43 @@ public partial class MainWindow : Window, IDialogService
 {
     private MainWindowViewModel? _vm;
     private bool _closeConfirmed;
+    private bool _startupBoundsApplied;
 
     public MainWindow()
     {
         InitializeComponent();
         RecentMenu.SubmenuOpened += (_, _) => FillRecentMenu();
         Deactivated += OnWindowDeactivated;
+    }
+
+    protected override void OnOpened(EventArgs e)
+    {
+        if (!_startupBoundsApplied)
+        {
+            _startupBoundsApplied = true;
+            // Native frame metrics and DPI can settle only after Show (especially with mixed-DPI monitors).
+            Avalonia.Threading.Dispatcher.UIThread.Post(FitStartupBounds, Avalonia.Threading.DispatcherPriority.Loaded);
+        }
+        base.OnOpened(e);
+    }
+
+    private void FitStartupBounds()
+    {
+        if (!IsVisible || WindowState != WindowState.Normal || (Screens.ScreenFromWindow(this) ?? Screens.Primary) is not { } screen) return;
+        var frame = FrameSize ?? ClientSize;
+        var insets = new Size(Math.Max(0, frame.Width - ClientSize.Width), Math.Max(0, frame.Height - ClientSize.Height));
+        var bounds = StartupWindowBounds.Fit(screen.WorkingArea, DesktopScaling,
+            new Size(Width, Height), new Size(MinWidth, MinHeight), insets);
+        MinWidth = bounds.Minimum.Width;
+        MinHeight = bounds.Minimum.Height;
+        // Let the platform apply smaller minimums before requesting a client size below the old minimum.
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (!IsVisible || WindowState != WindowState.Normal) return;
+            Width = bounds.Client.Width;
+            Height = bounds.Client.Height;
+            Position = bounds.Position;
+        }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
     private void OnWindowDeactivated(object? sender, EventArgs e)
